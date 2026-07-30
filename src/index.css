@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00193c;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #002d62;
+  --color-on-primary-container: #7796d1;
+  --color-primary-fixed: #d7e2ff;
+  --color-primary-fixed-dim: #abc7ff;
+  --color-on-primary-fixed: #001b3f;
+  --color-on-primary-fixed-variant: #24467c;
+
+  --color-secondary: #006c47;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #8af5be;
+  --color-on-secondary-container: #00714b;
+  --color-secondary-fixed: #8df7c1;
+  --color-secondary-fixed-dim: #71dba6;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005235;
+
+  --color-tertiary: #3e0003;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #650007;
+  --color-on-tertiary-container: #ff6159;
+  --color-tertiary-fixed: #ffdad6;
+  --color-tertiary-fixed-dim: #ffb3ac;
+  --color-on-tertiary-fixed: #410003;
+  --color-on-tertiary-fixed-variant: #930010;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-background: #fcf9f8;
+  --color-on-background: #1c1b1b;
+  --color-surface: #fcf9f8;
+  --color-surface-dim: #dcd9d9;
+  --color-surface-bright: #fcf9f8;
+  --color-surface-variant: #e5e2e1;
+  --color-on-surface-variant: #43474f;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container: #f0eded;
+  --color-surface-container-high: #eae7e7;
+  --color-surface-container-highest: #e5e2e1;
+  --color-on-surface: #1c1b1b;
+  --color-inverse-surface: #313030;
+  --color-inverse-on-surface: #f3f0ef;
+  --color-inverse-primary: #abc7ff;
+  --color-outline: #747781;
+  --color-outline-variant: #c4c6d1;
+  --color-surface-tint: #3e5e95;
+
+  --font-sans: 'Inter', sans-serif;
+  
+  --spacing-margin-desktop: 64px;
+  --spacing-margin-mobile: 20px;
+  --spacing-stack-sm: 12px;
+  --spacing-stack-md: 24px;
+  --spacing-stack-lg: 40px;
+  --spacing-gutter: 24px;
+  --spacing-touch-target-min: 48px;
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* High contrast support */
+.high-contrast {
+  filter: contrast(115%);
+}
