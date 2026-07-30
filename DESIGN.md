@@ -35,7 +35,6 @@ Todas las tablas usan el prefijo `conta_`.
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `id` | INT UNSIGNED AUTO_INCREMENT PK | Identificador único |
-| `code` | VARCHAR(3) NOT NULL | Código abreviado (ALM, VIV...) |
 | `name` | VARCHAR(100) NOT NULL | Nombre visible |
 | `icon` | VARCHAR(50) NOT NULL | Icono Material Symbols |
 | `color_bg` | VARCHAR(50) DEFAULT 'bg-primary-fixed' | Clase Tailwind fondo |
@@ -74,24 +73,29 @@ Todas las tablas usan el prefijo `conta_`.
 | `currency` | VARCHAR(20) | Euro (€) - EUR |
 | `date_format` | VARCHAR(40) | DD / MM / AAAA (31/12/2024) |
 | `high_contrast` | TINYINT(1) DEFAULT 0 | |
+| `app_title` | VARCHAR(100) DEFAULT 'Mis Cuentas' | Título personalizado |
+| `app_subtitle` | VARCHAR(200) DEFAULT 'Control Financiero' | Subtítulo personalizado |
 | `updated_at` | TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | |
 
 ## 5. API REST — Endpoints PHP
 
+**Nota:** Hostalia no soporta `PUT` ni `DELETE`. Las operaciones de eliminación usan `POST` con `?_method=DELETE` y las preferencias usan `POST`.
+
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/conta/api/categories.php` | Listar categorías con subcategorías y contador de movimientos |
-| POST | `/conta/api/categories.php` | Crear categoría |
+| GET | `/conta/api/categories.php` | Listar categorías con subcategorías y contador |
+| POST | `/conta/api/categories.php` | Crear categoría `{name, icon}` |
 | DELETE | `/conta/api/categories.php?id=X` | Eliminar (solo si no tiene movimientos) |
-| POST | `/conta/api/subcategories.php` | Crear subcategoría |
+| POST | `/conta/api/subcategories.php` | Crear subcategoría `{category_id, name}` |
 | DELETE | `/conta/api/subcategories.php?id=X` | Eliminar subcategoría |
 | GET | `/conta/api/movements.php?year=&month=&category_id=&search=&page=` | Listar movimientos (filtros + paginación + totales) |
 | POST | `/conta/api/movements.php` | Crear movimiento |
-| DELETE | `/conta/api/movements.php?id=X` | Eliminar movimiento |
-| GET | `/conta/api/stats.php` | Dashboard: saldo, totales, histórico 6 meses, últimos 3 movimientos |
+| POST | `/conta/api/movements.php?_method=DELETE&id=X` | Eliminar movimiento |
+| GET | `/conta/api/stats.php` | Dashboard: saldo, totales, histórico mensual, últimos movimientos |
 | GET | `/conta/api/preferences.php` | Obtener preferencias |
-| PUT | `/conta/api/preferences.php` | Actualizar preferencias |
-| GET | `/conta/api/export.php?format=csv` | Exportar CSV |
+| POST | `/conta/api/preferences.php` | Actualizar preferencias |
+| GET | `/conta/api/export.php?format=csv` | Exportar CSV (UTF-8 BOM, separador `;`) |
+| POST | `/conta/api/import.php` | Importar CSV (multipart, campo `file`) |
 
 ## 6. Frontend — Estructura actual
 
@@ -109,21 +113,21 @@ src/
     ├── AjustesView.tsx        # Configuración
     ├── NuevaEntradaModal.tsx  # Modal crear ingreso/gasto
     ├── NuevaCategoriaModal.tsx# Modal crear categoría/subcategoría
+    ├── ChangePasswordModal.tsx# Modal cambiar contraseña
     └── HelpModal.tsx          # Modal de ayuda
 ```
 
 ### 6.1 Flujo de datos
 
 1. **Carga inicial**: `App.tsx` monta y llama en paralelo a `fetchCategories()`, `fetchMovements()`, `fetchPreferences()`
-2. **Muestra loading** mientras se resuelven las promesas
-3. **Categorías y preferencias** se almacenan en estado de App y se pasan como props
-4. **Movimientos** se almacenan en estado de App (carga inicial sin filtros)
-5. **Al crear/eliminar** un movimiento o categoría, se llama a la API y se actualiza el estado local
-6. **Al cambiar preferencias**, se llama a `PUT /api/preferences.php`
+2. **Categorías y preferencias** se almacenan en estado de App y se pasan como props
+3. **Movimientos** se almacenan en estado de App (carga inicial sin filtros)
+4. **Al crear/eliminar** un movimiento o categoría, se llama a la API y se actualiza el estado local
+5. **Al cambiar preferencias** (moneda, formato), se llama a `POST /api/preferences.php`. Los campos de título/subtítulo tienen botón "Guardar cambios" explícito.
 
 ### 6.2 Normalización
 
-Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campos snake_case de la API (ej: `category_code`, `color_bg`) a camelCase del frontend (`categoryCode`, `colorBgClass`).
+Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campos snake_case de la API a camelCase del frontend.
 
 ## 7. Despliegue en Hostalia
 
@@ -144,38 +148,41 @@ Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campo
     │   ├── movements.php
     │   ├── stats.php
     │   ├── preferences.php
-    │   └── export.php
+    │   ├── export.php
+    │   └── import.php
     └── .htaccess
 ```
 
 ### 7.2 Proceso de despliegue
 
-1. `npm run build` → genera `dist/` con `base: '/conta/'`
+1. `npm run build` → genera `dist/`
 2. Subir contenido de `dist/` a `public_html/conta/`
-3. Subir carpeta `api/` a `public_html/conta/`
+3. Subir carpeta `api/` a `public_html/conta/api/`
 4. Ejecutar `api/schema.sql` en phpMyAdmin o consola MySQL
 5. Acceder a `https://jramirez.eu/conta/`
+
+**Migraciones automáticas:** Al usarse por primera vez, algunos endpoints añaden columnas faltantes (`app_title`, `app_subtitle` en `conta_preferences`) o eliminan columnas obsoletas (`code` en `conta_categories`).
 
 ## 8. Estado de las funcionalidades
 
 | Funcionalidad | Estado |
 |---|---|
-| Dashboard con saldo y resumen mensual | ✅ API stats |
+| Dashboard con saldo, resumen dinámico por mes/año | ✅ Datos reales, mes actual dinámico |
 | Registrar ingreso/gasto con categorías | ✅ API movements |
 | Tabla histórica con filtros y paginación | ✅ API movements |
-| Saldo acumulado dinámico | ✅ Calculado en backend |
-| Gestión de categorías y subcategorías | ✅ API categories |
-| Preferencias (moneda, fecha, contraste) | ✅ API preferences |
-| Exportar CSV | ✅ API export |
+| Saldo acumulado dinámico | ✅ Calculado en frontend |
+| Gestión de categorías y subcategorías (sin código) | ✅ API categories |
+| Preferencias (moneda, fecha, contraste, título, subtítulo) | ✅ API preferences (POST) |
+| Exportar CSV (UTF-8 BOM, separador `;`) | ✅ API export |
+| Importar CSV (UTF-8 BOM, separador `;`) | ✅ API import |
 | Copia de seguridad JSON | ✅ Frontend (datos en memoria) |
-| Estados de carga (loading spinner) | ✅ Implementado |
-| Toast notifications | ✅ Mantenido |
-| Modal de ayuda | ✅ Mantenido |
-| Diseño responsive | ✅ Mantenido |
-| Importar datos | ⚠️ Parcial (placeholder) |
+| Toast notifications | ✅ |
+| Cambio de contraseña | ✅ |
+| Modal de ayuda | ✅ |
+| Diseño responsive | ✅ |
+| Histórico 12 meses con datos reales | ✅ |
 | Editar movimientos | ❌ Pendiente |
 | Multiusuario / autenticación | ❌ Pendiente |
-| Gráficos con datos reales | 🔄 Pendiente (conectar a API stats) |
 
 ## 9. Configuración
 

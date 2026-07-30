@@ -19,33 +19,16 @@ Aplicación web para la gestión de finanzas domésticas: control de ingresos, g
 
 ### Opción 1: Con servidor mock (recomendado, no requiere PHP)
 
-Ejecuta el servidor mock de la API y Vite en dos terminales:
-
 ```bash
-# Terminal 1 — API mock
-node api/mock-server.mjs
-
-# Terminal 2 — Frontend
-npm run dev
+node api/mock-server.mjs    # Terminal 1 — API mock (puerto 8080)
+npm run dev                  # Terminal 2 — Frontend
 ```
 
-Abrir `http://localhost:5173/conta/` (o el puerto que indique Vite).
+Abrir `http://localhost:5173/conta/`.
 
 ### Opción 2: Contra servidor remoto
 
-Crea un archivo `.env.local`:
-
-```
-VITE_API_TARGET=https://jramirez.eu
-```
-
-Luego:
-
-```bash
-npm run dev
-```
-
-Vite redirigirá las llamadas API a tu servidor de producción.
+Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu`, luego `npm run dev`.
 
 ## Scripts
 
@@ -55,7 +38,6 @@ Vite redirigirá las llamadas API a tu servidor de producción.
 | `npm run build` | Build de producción en `dist/` |
 | `npm run preview` | Previsualizar build |
 | `npm run lint` | TypeScript type-checking |
-| `node api/mock-server.mjs` | Servidor mock de la API (puerto 8080) |
 
 ## Despliegue en Hostalia
 
@@ -64,6 +46,21 @@ npm run build
 ```
 
 Subir `dist/` a `public_html/conta/` y la carpeta `api/` a `public_html/conta/api/`. Ejecutar `api/schema.sql` en la base de datos.
+
+**Nota:** Hostalia no soporta los verbos HTTP `PUT` ni `DELETE`. Los endpoints usan `POST` con `_method=DELETE` donde es necesario.
+
+## Formato CSV
+
+Importación y exportación usan el mismo formato:
+
+```
+Fecha;Categoría;Subcategoría;Descripción;Tipo;Importe
+```
+
+- Separador: `;` (punto y coma)
+- Codificación: UTF-8 con BOM
+- Decimales: punto (`.`)
+- Fecha: `YYYY-MM-DD`
 
 ## Estructura
 
@@ -80,6 +77,7 @@ src/
     ├── AjustesView.tsx        # Configuración
     ├── NuevaEntradaModal.tsx
     ├── NuevaCategoriaModal.tsx
+    ├── ChangePasswordModal.tsx
     └── HelpModal.tsx
 
 api/
@@ -91,5 +89,6 @@ api/
 ├── stats.php
 ├── preferences.php
 ├── export.php
+├── import.php
 └── mock-server.mjs            # Mock para desarrollo local
 ```
