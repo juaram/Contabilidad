@@ -7,7 +7,13 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
-  const data = await res.json();
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || 'El servidor devolvió una respuesta vacía. Revisa que PHP no tenga errores.');
+  }
   if (!res.ok) {
     throw new Error(data.error || 'Error de conexión con el servidor');
   }
@@ -50,10 +56,10 @@ export async function fetchCategories(): Promise<Category[]> {
   return request<Category[]>('categories.php');
 }
 
-export async function createCategory(name: string, code: string, icon: string): Promise<Category> {
+export async function createCategory(name: string, icon: string): Promise<Category> {
   return request<Category>('categories.php', {
     method: 'POST',
-    body: JSON.stringify({ name, code, icon }),
+    body: JSON.stringify({ name, icon }),
   });
 }
 
@@ -99,7 +105,7 @@ export async function createMovement(data: {
 }
 
 export async function deleteMovement(id: number): Promise<void> {
-  await request(`movements.php?id=${id}`, { method: 'DELETE' });
+  await request(`movements.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
 export async function fetchStats(): Promise<DashboardStats> {
@@ -112,7 +118,7 @@ export async function fetchPreferences(): Promise<any> {
 
 export async function updatePreferences(data: Record<string, any>): Promise<any> {
   return request('preferences.php', {
-    method: 'PUT',
+    method: 'POST',
     body: JSON.stringify(data),
   });
 }

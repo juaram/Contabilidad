@@ -47,7 +47,7 @@ foreach ($monthlyData as $row) {
 $months = array_reverse($months);
 
 $lastStmt = $pdo->query("
-    SELECT m.*, c.name AS cat_name, c.code AS cat_code, c.icon AS cat_icon, s.name AS sub_name
+    SELECT m.*, c.name AS cat_name, c.icon AS cat_icon, s.name AS sub_name
     FROM " . TABLE_PREFIX . "movements m
     LEFT JOIN " . TABLE_PREFIX . "categories c ON m.category_id = c.id
     LEFT JOIN " . TABLE_PREFIX . "subcategories s ON m.subcategory_id = s.id
@@ -60,7 +60,6 @@ foreach ($lastStmt as $m) {
         'id' => (int) $m['id'],
         'date' => $m['date'],
         'category' => $m['cat_name'],
-        'category_code' => $m['cat_code'],
         'category_icon' => $m['cat_icon'],
         'subcategory' => $m['sub_name'] ?? '',
         'description' => $m['description'],

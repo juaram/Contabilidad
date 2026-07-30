@@ -8,7 +8,7 @@ switch ($method) {
     case 'GET':
         getPreferences();
         break;
-    case 'PUT':
+    case 'POST':
         updatePreferences();
         break;
     default:
@@ -43,6 +43,9 @@ function getPreferences(): void
 function updatePreferences(): void
 {
     global $pdo;
+
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN app_title VARCHAR(100) NOT NULL DEFAULT 'Mis Cuentas' AFTER high_contrast"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN app_subtitle VARCHAR(200) NOT NULL DEFAULT 'Control Financiero' AFTER app_title"); } catch (PDOException $e) { }
 
     $input = getInput();
     $fields = [];

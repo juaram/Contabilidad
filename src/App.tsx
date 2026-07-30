@@ -107,9 +107,9 @@ export default function App() {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = async (name: string, code: string, icon: string) => {
+  const handleSaveCategory = async (name: string, icon: string) => {
     try {
-      const saved = await api.createCategory(name, code, icon);
+      const saved = await api.createCategory(name, icon);
       setCategories((prev) => [...prev, normalizeCategory(saved)]);
       showToast(`✓ Categoría "${name}" creada.`);
     } catch {
@@ -164,10 +164,24 @@ export default function App() {
   const handleImportData = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.csv, .json';
-    input.onchange = (e) => {
+    input.accept = '.csv';
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) showToast('✓ Archivo importado correctamente.');
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/conta/api/import.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`✓ ${data.message}`);
+          setRefreshKey((k) => k + 1);
+        } else {
+          showToast(data.error || 'Error al importar');
+        }
+      } catch {
+        showToast('Error de conexión al importar');
+      }
     };
     input.click();
   };
@@ -243,7 +257,6 @@ export default function App() {
 function normalizeCategory(c: any): Category {
   return {
     id: String(c.id),
-    code: c.code,
     name: c.name,
     icon: c.icon,
     colorBgClass: c.color_bg || c.colorBgClass || 'bg-primary-fixed',
@@ -260,7 +273,6 @@ function normalizeMovement(m: any): Movement {
     id: String(m.id),
     date: m.date,
     category: m.category || m.cat_name || '',
-    categoryCode: m.category_code || m.cat_code || '',
     category_id: m.category_id ? String(m.category_id) : '',
     subcategory: m.subcategory || m.sub_name || '',
     subcategory_id: m.subcategory_id ? String(m.subcategory_id) : null,

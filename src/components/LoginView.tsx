@@ -26,6 +26,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       const msg = err?.message || '';
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('net::ERR_CONNECTION_REFUSED')) {
         setError('No se puede conectar con el servidor. Asegúrate de ejecutar: node api/mock-server.mjs');
+      } else if (msg.includes('respuesta vacía')) {
+        setError('Error de comunicación con el servidor (Hostalia). Revisa que los archivos PHP estén subidos correctamente.');
       } else {
         setError(msg || 'Usuario o contraseña incorrectos');
       }

@@ -61,7 +61,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   // Available subcategories for selected category filter
   const availableSubcategories = useMemo(() => {
     if (selectedCategory === 'todas') return [];
-    const cat = categories.find((c) => c.code === selectedCategory || c.name === selectedCategory);
+    const cat = categories.find((c) => c.id === selectedCategory || c.name === selectedCategory);
     return cat ? cat.subcategories : [];
   }, [categories, selectedCategory]);
 
@@ -78,7 +78,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       if (selectedMonth !== 'todos' && month !== selectedMonth) return false;
 
       if (selectedCategory !== 'todas') {
-        if (m.categoryCode !== selectedCategory && m.category !== selectedCategory) {
+        if (m.category_id !== selectedCategory && m.category !== selectedCategory) {
           return false;
         }
       }
@@ -231,8 +231,8 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
               >
                 <option value="todas">Categoría (Todas)</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.code}>
-                    {cat.code} - {cat.name}
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -372,7 +372,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                               ? 'bg-white/20 text-white'
                               : 'bg-surface-container-high text-on-surface-variant'
                           }`}>
-                            {mov.categoryCode || 'VAR'}
+                            {mov.category}
                           </span>
                         </td>
 

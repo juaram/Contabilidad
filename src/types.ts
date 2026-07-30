@@ -5,7 +5,6 @@ export interface Movement {
   date: string;
   category_id: string;
   category: string;
-  categoryCode: string;
   subcategory_id: string | null;
   subcategory: string;
   description: string;
@@ -21,7 +20,6 @@ export interface Subcategory {
 
 export interface Category {
   id: string;
-  code: string;
   name: string;
   icon: string;
   colorBgClass: string;

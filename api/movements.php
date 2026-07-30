@@ -4,6 +4,10 @@ require_once __DIR__ . '/config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+if ($method === 'POST' && isset($_GET['_method'])) {
+    $method = strtoupper($_GET['_method']);
+}
+
 switch ($method) {
     case 'GET':
         listMovements();
@@ -72,7 +76,7 @@ function listMovements(): void
 
     $stmt = $pdo->prepare("
         SELECT m.id, m.date, m.category_id, m.subcategory_id, m.description, m.type, m.amount, m.created_at,
-               c.id AS cat_id, c.code AS cat_code, c.name AS cat_name, c.icon AS cat_icon,
+               c.id AS cat_id, c.name AS cat_name, c.icon AS cat_icon,
                s.id AS sub_id, s.name AS sub_name
         FROM " . TABLE_PREFIX . "movements m
         LEFT JOIN " . TABLE_PREFIX . "categories c ON m.category_id = c.id
@@ -119,7 +123,6 @@ function listMovements(): void
             'category_id' => (int) $m['category_id'],
             'subcategory_id' => $m['subcategory_id'] ? (int) $m['subcategory_id'] : null,
             'category' => $m['cat_name'],
-            'category_code' => $m['cat_code'],
             'subcategory' => $m['sub_name'] ?? '',
             'description' => $m['description'],
             'type' => $m['type'],
@@ -187,7 +190,7 @@ function createMovement(): void
     $newId = (int) $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("
-        SELECT m.*, c.name AS cat_name, c.code AS cat_code, s.name AS sub_name
+        SELECT m.*, c.name AS cat_name, s.name AS sub_name
         FROM " . TABLE_PREFIX . "movements m
         LEFT JOIN " . TABLE_PREFIX . "categories c ON m.category_id = c.id
         LEFT JOIN " . TABLE_PREFIX . "subcategories s ON m.subcategory_id = s.id
@@ -202,7 +205,6 @@ function createMovement(): void
         'category_id' => (int) $mov['category_id'],
         'subcategory_id' => $mov['subcategory_id'] ? (int) $mov['subcategory_id'] : null,
         'category' => $mov['cat_name'],
-        'category_code' => $mov['cat_code'],
         'subcategory' => $mov['sub_name'] ?? '',
         'description' => $mov['description'],
         'type' => $mov['type'],

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Category, UserPreferences } from '../types';
 
 interface AjustesViewProps {
@@ -31,6 +31,20 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onChangePassword,
 }) => {
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>(['cat-hogar', 'cat-alimentacion']);
+  const [localTitle, setLocalTitle] = useState(preferences.appTitle);
+  const [localSubtitle, setLocalSubtitle] = useState(preferences.appSubtitle);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setLocalTitle(preferences.appTitle);
+    setLocalSubtitle(preferences.appSubtitle);
+    setDirty(false);
+  }, [preferences.appTitle, preferences.appSubtitle]);
+
+  const handleSaveTextPrefs = () => {
+    onUpdatePreferences({ appTitle: localTitle, appSubtitle: localSubtitle });
+    setDirty(false);
+  };
 
   const toggleCategoryExpand = (catId: string) => {
     setExpandedCatIds((prev) =>
@@ -40,30 +54,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
 
   return (
     <div className="flex flex-col w-full pb-16">
-      {/* Header Area / Introduction */}
-      <section className="px-4 md:px-margin-desktop py-stack-lg bg-surface-container-low border-b-2 border-outline-variant">
-        <div className="max-w-[1100px] mx-auto w-full flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold text-sm md:text-base text-primary uppercase tracking-widest">
-              Configuración
-            </span>
-            <h2 className="font-bold text-3xl md:text-4xl text-on-surface">
-              Personalice su experiencia
-            </h2>
-            <p className="font-normal text-lg md:text-xl text-on-surface-variant max-w-2xl">
-              Administre sus categorías de gasto, el formato de la moneda y la seguridad de su información financiera.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-4 bg-surface-container-highest p-4 rounded-xl border-2 border-outline-variant shrink-0">
-            <span className="material-symbols-outlined text-primary text-[32px]">shield_person</span>
-            <div className="flex flex-col">
-              <span className="font-medium text-sm text-on-surface-variant leading-none">Sesión protegida</span>
-              <span className="font-bold text-base text-primary mt-1">Modo Administrador</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Main Settings Grid */}
       <section className="px-4 md:px-margin-desktop py-stack-lg">
@@ -224,8 +215,8 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   <label className="font-semibold text-base text-on-surface-variant">Título de la aplicación</label>
                   <input
                     type="text"
-                    value={preferences.appTitle}
-                    onChange={(e) => onUpdatePreferences({ appTitle: e.target.value })}
+                    value={localTitle}
+                    onChange={(e) => { setLocalTitle(e.target.value); setDirty(true); }}
                     className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
                   />
                 </div>
@@ -235,11 +226,21 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   <label className="font-semibold text-base text-on-surface-variant">Subtítulo de la aplicación</label>
                   <input
                     type="text"
-                    value={preferences.appSubtitle}
-                    onChange={(e) => onUpdatePreferences({ appSubtitle: e.target.value })}
+                    value={localSubtitle}
+                    onChange={(e) => { setLocalSubtitle(e.target.value); setDirty(true); }}
                     className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
                   />
                 </div>
+
+                {dirty && (
+                  <button
+                    onClick={handleSaveTextPrefs}
+                    className="w-full h-12 bg-primary text-on-primary font-bold rounded-xl hover:bg-primary-container transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">save</span>
+                    Guardar cambios
+                  </button>
+                )}
               </div>
             </div>
 
@@ -271,7 +272,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   <span className="material-symbols-outlined text-on-surface-variant text-[32px]">upload_file</span>
                   <div className="flex flex-col">
                     <span className="font-semibold text-base text-on-surface">Importar Datos</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Subir archivo Excel o CSV</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Subir archivo CSV (separador ;)</span>
                   </div>
                 </button>
 
@@ -282,7 +283,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   <span className="material-symbols-outlined text-primary text-[32px]">file_download</span>
                   <div className="flex flex-col">
                     <span className="font-semibold text-base text-primary">Exportar Datos</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Descargar Excel o PDF</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Descargar CSV (separador ;)</span>
                   </div>
                 </button>
 

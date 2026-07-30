@@ -5,7 +5,7 @@ interface NuevaCategoriaModalProps {
   mode: 'category' | 'subcategory';
   parentCategoryName?: string;
   onClose: () => void;
-  onSaveCategory: (name: string, code: string, icon: string) => void;
+  onSaveCategory: (name: string, icon: string) => void;
   onSaveSubcategory: (parentName: string, subcategoryName: string) => void;
 }
 
@@ -18,7 +18,6 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
   onSaveSubcategory,
 }) => {
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
   const [icon, setIcon] = useState('category');
 
   if (!isOpen) return null;
@@ -28,14 +27,12 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
     if (!name.trim()) return;
 
     if (mode === 'category') {
-      const generatedCode = code.trim().toUpperCase() || name.substring(0, 3).toUpperCase();
-      onSaveCategory(name.trim(), generatedCode, icon);
+      onSaveCategory(name.trim(), icon);
     } else {
       onSaveSubcategory(parentCategoryName, name.trim());
     }
 
     setName('');
-    setCode('');
     onClose();
   };
 
@@ -73,20 +70,6 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
 
           {mode === 'category' && (
             <>
-              <div className="space-y-1">
-                <label className="block font-semibold text-base text-on-surface">
-                  Código Abreviado (3 letras)
-                </label>
-                <input
-                  type="text"
-                  maxLength={3}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="Ej: VEH"
-                  className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-bold text-lg uppercase"
-                />
-              </div>
-
               <div className="space-y-1">
                 <label className="block font-semibold text-base text-on-surface">Icono</label>
                 <select

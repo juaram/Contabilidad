@@ -54,24 +54,21 @@ function createCategory(): void
 {
     global $pdo;
 
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "categories DROP COLUMN code"); } catch (PDOException $e) { }
+
     $input = getInput();
     $name = trim($input['name'] ?? '');
-    $code = strtoupper(trim($input['code'] ?? ''));
     $icon = trim($input['icon'] ?? 'category');
 
     if ($name === '') {
         jsonError('El nombre de la categoría es obligatorio');
     }
 
-    if ($code === '') {
-        $code = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name), 0, 3));
-    }
-
     $stmt = $pdo->prepare("
-        INSERT INTO " . TABLE_PREFIX . "categories (code, name, icon)
-        VALUES (:code, :name, :icon)
+        INSERT INTO " . TABLE_PREFIX . "categories (name, icon)
+        VALUES (:name, :icon)
     ");
-    $stmt->execute([':code' => $code, ':name' => $name, ':icon' => $icon]);
+    $stmt->execute([':name' => $name, ':icon' => $icon]);
 
     $newId = (int) $pdo->lastInsertId();
 

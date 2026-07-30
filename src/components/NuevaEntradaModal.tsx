@@ -30,7 +30,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
       setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
       if (categories.length > 0) {
-        setSelectedCategoryCode(categories[0].code);
+        setSelectedCategoryCode(categories[0].id);
         if (categories[0].subcategories.length > 0) {
           setSubcategory(categories[0].subcategories[0].name);
         }
@@ -40,11 +40,11 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
 
   if (!isOpen) return null;
 
-  const currentCategoryObj = categories.find((c) => c.code === selectedCategoryCode) || categories[0];
+  const currentCategoryObj = categories.find((c) => c.id === selectedCategoryCode) || categories[0];
 
-  const handleCategoryChange = (code: string) => {
-    setSelectedCategoryCode(code);
-    const cat = categories.find((c) => c.code === code);
+  const handleCategoryChange = (id: string) => {
+    setSelectedCategoryCode(id);
+    const cat = categories.find((c) => c.id === id);
     if (cat && cat.subcategories.length > 0) {
       setSubcategory(cat.subcategories[0].name);
     } else {
@@ -65,14 +65,13 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
       return;
     }
 
-    const selectedCat = categories.find((c) => c.code === selectedCategoryCode);
+    const selectedCat = categories.find((c) => c.id === selectedCategoryCode);
     const selectedSub = selectedCat?.subcategories.find((s) => s.name === subcategory);
 
     onSave({
       date,
       category_id: selectedCat?.id ?? '',
       category: selectedCat?.name ?? 'Varios',
-      categoryCode: selectedCategoryCode || 'VAR',
       subcategory_id: selectedSub?.id ?? null,
       subcategory: subcategory || 'General',
       description: description.trim(),
@@ -182,8 +181,8 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                 className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
               >
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.code}>
-                    {cat.name} ({cat.code})
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
