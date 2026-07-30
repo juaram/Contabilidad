@@ -2,9 +2,11 @@ export type MovementType = 'ingreso' | 'gasto';
 
 export interface Movement {
   id: string;
-  date: string; // ISO or YYYY-MM-DD
+  date: string;
+  category_id: string;
   category: string;
   categoryCode: string;
+  subcategory_id: string | null;
   subcategory: string;
   description: string;
   type: MovementType;
@@ -28,9 +30,11 @@ export interface Category {
 }
 
 export interface UserPreferences {
-  currency: string; // 'Euro (€) - EUR', 'Dólar ($) - USD', 'Libra (£) - GBP'
-  dateFormat: string; // 'DD / MM / AAAA (31/12/2024)'
+  currency: string;
+  dateFormat: string;
   highContrast: boolean;
+  appTitle: string;
+  appSubtitle: string;
 }
 
 export interface FilterState {

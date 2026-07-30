@@ -4,9 +4,11 @@ interface HeaderProps {
   activeTab: 'inicio' | 'registro' | 'ajustes';
   setActiveTab: (tab: 'inicio' | 'registro' | 'ajustes') => void;
   onOpenNewEntry: () => void;
+  appTitle: string;
+  appSubtitle: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenNewEntry }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenNewEntry, appTitle, appSubtitle }) => {
   return (
     <header className="fixed top-0 left-0 right-0 h-24 bg-surface border-b-2 border-outline-variant z-50 px-4 md:px-margin-desktop flex items-center justify-between backdrop-blur-md">
       <div className="flex items-center gap-6 lg:gap-12">
@@ -15,10 +17,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenN
           className="flex flex-col cursor-pointer select-none"
         >
           <h1 className="font-bold text-2xl lg:text-3xl text-primary tracking-tight leading-none">
-            Mis Cuentas
+            {appTitle}
           </h1>
           <p className="text-sm font-medium text-on-surface-variant">
-            Control Financiero
+            {appSubtitle}
           </p>
         </div>
 

@@ -18,12 +18,26 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   onDeleteMovement,
   onExportPDF,
 }) => {
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
+  const [selectedYear, setSelectedYear] = useState<number>(() => {
+    const years = movements.map((m) => new Date(m.date).getFullYear()).filter((y) => !isNaN(y));
+    const max = Math.max(...years);
+    return isFinite(max) ? max : new Date().getFullYear();
+  });
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    movements.forEach((m) => {
+      const y = new Date(m.date).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    });
+    const sorted = [...years].sort((a, b) => b - a);
+    return sorted.length > 0 ? sorted : [new Date().getFullYear()];
+  }, [movements]);
   const [selectedMonth, setSelectedMonth] = useState<string>('todos');
   const [selectedCategory, setSelectedCategory] = useState<string>('todas');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('todas');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [highlightedRowId, setHighlightedRowId] = useState<string | null>('mov-1');
+  const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 8;
 
@@ -36,7 +50,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
   // Reset Filters
   const handleResetFilters = () => {
-    setSelectedYear(2024);
+    setSelectedYear(availableYears[0]);
     setSelectedMonth('todos');
     setSelectedCategory('todas');
     setSelectedSubcategory('todas');
@@ -157,7 +171,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <div className="flex items-center gap-3">
-                {[2024, 2023, 2022, 2021].map((year) => (
+                {availableYears.map((year) => (
                   <button
                     key={year}
                     onClick={() => {
@@ -241,8 +255,17 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 ))}
               </select>
 
-              {/* Search Bar */}
-              <div className="relative flex-grow min-w-[200px]">
+              {/* Reset Button */}
+              <button
+                onClick={handleResetFilters}
+                className="flex items-center gap-1.5 px-4 h-12 text-error font-semibold text-base hover:bg-error-container rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <span className="material-symbols-outlined text-[20px]">restart_alt</span>
+                <span>Restablecer</span>
+              </button>
+
+              {/* Search Bar — full width */}
+              <div className="relative w-full">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                   search
                 </span>
@@ -257,15 +280,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   className="w-full h-12 pl-10 pr-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none"
                 />
               </div>
-
-              {/* Reset Button */}
-              <button
-                onClick={handleResetFilters}
-                className="flex items-center gap-1.5 px-4 h-12 text-error font-semibold text-base hover:bg-error-container rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-              >
-                <span className="material-symbols-outlined text-[20px]">restart_alt</span>
-                <span>Restablecer</span>
-              </button>
             </div>
           </div>
         </div>

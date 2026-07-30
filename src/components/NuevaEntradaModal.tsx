@@ -65,10 +65,15 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
       return;
     }
 
+    const selectedCat = categories.find((c) => c.code === selectedCategoryCode);
+    const selectedSub = selectedCat?.subcategories.find((s) => s.name === subcategory);
+
     onSave({
       date,
-      category: currentCategoryObj ? currentCategoryObj.name : 'Varios',
+      category_id: selectedCat?.id ?? '',
+      category: selectedCat?.name ?? 'Varios',
       categoryCode: selectedCategoryCode || 'VAR',
+      subcategory_id: selectedSub?.id ?? null,
       subcategory: subcategory || 'General',
       description: description.trim(),
       type,

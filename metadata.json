@@ -1,6 +1,0 @@
-{
-  "name": "Mis Cuentas",
-  "description": "Aplicación de control financiero para gestión de ingresos, gastos, categorías y registro histórico de movimientos.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

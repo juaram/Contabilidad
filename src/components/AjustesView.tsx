@@ -4,6 +4,7 @@ import { Category, UserPreferences } from '../types';
 interface AjustesViewProps {
   categories: Category[];
   preferences: UserPreferences;
+  username: string;
   onUpdatePreferences: (updated: Partial<UserPreferences>) => void;
   onOpenAddCategoryModal: () => void;
   onOpenAddSubcategoryModal: (categoryName: string) => void;
@@ -12,11 +13,13 @@ interface AjustesViewProps {
   onImportData: () => void;
   onBackupData: () => void;
   onOpenHelpModal: () => void;
+  onChangePassword: () => void;
 }
 
 export const AjustesView: React.FC<AjustesViewProps> = ({
   categories,
   preferences,
+  username,
   onUpdatePreferences,
   onOpenAddCategoryModal,
   onOpenAddSubcategoryModal,
@@ -25,6 +28,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onImportData,
   onBackupData,
   onOpenHelpModal,
+  onChangePassword,
 }) => {
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>(['cat-hogar', 'cat-alimentacion']);
 
@@ -214,6 +218,28 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     />
                   </button>
                 </div>
+
+                {/* App Title */}
+                <div className="flex flex-col gap-2 border-t border-outline-variant/60 pt-4">
+                  <label className="font-semibold text-base text-on-surface-variant">Título de la aplicación</label>
+                  <input
+                    type="text"
+                    value={preferences.appTitle}
+                    onChange={(e) => onUpdatePreferences({ appTitle: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
+                  />
+                </div>
+
+                {/* App Subtitle */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-base text-on-surface-variant">Subtítulo de la aplicación</label>
+                  <input
+                    type="text"
+                    value={preferences.appSubtitle}
+                    onChange={(e) => onUpdatePreferences({ appSubtitle: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
+                  />
+                </div>
               </div>
             </div>
 
@@ -227,6 +253,17 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
               </div>
 
               <div className="p-4 md:p-stack-md grid grid-cols-1 gap-4">
+                <button
+                  onClick={onChangePassword}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">lock</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Cambiar Contraseña</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Actualizar la contraseña de acceso</span>
+                  </div>
+                </button>
+
                 <button
                   onClick={onImportData}
                   className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
