@@ -1,10 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Category, Movement, MovementType } from '../types';
 
+function parseAmount(value: string): number {
+  const s = value.trim();
+  if (s === '') return NaN;
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  let normalized = s;
+  if (hasComma && hasDot) {
+    // Separador decimal = coma, separador de miles = punto
+    normalized = s.replace(/\./g, '').replace(',', '.');
+  } else if (hasComma) {
+    normalized = s.replace(',', '.');
+  } else if (hasDot && s.split('.').length === 2 && /\.\d{1,2}$/.test(s)) {
+    // Un único punto final: se interpreta como decimal
+  } else if (hasDot) {
+    // Múltiples puntos: separadores de miles
+    normalized = s.replace(/\./g, '');
+  }
+  return parseFloat(normalized);
+}
+
 interface NuevaEntradaModalProps {
   isOpen: boolean;
   initialType?: MovementType;
   categories: Category[];
+  editingMovement?: Movement | null;
   onClose: () => void;
   onSave: (entry: Omit<Movement, 'id'>) => void;
 }
@@ -13,6 +34,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
   isOpen,
   initialType = 'gasto',
   categories,
+  editingMovement = null,
   onClose,
   onSave,
 }) => {
@@ -25,18 +47,27 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setType(initialType);
-      setAmount('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setDescription('');
-      if (categories.length > 0) {
-        setSelectedCategoryCode(categories[0].id);
-        if (categories[0].subcategories.length > 0) {
-          setSubcategory(categories[0].subcategories[0].name);
+      if (editingMovement) {
+        setType(editingMovement.type);
+        setAmount(editingMovement.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }));
+        setDate(editingMovement.date);
+        setDescription(editingMovement.description);
+        setSelectedCategoryCode(editingMovement.category_id || categories[0]?.id || '');
+        setSubcategory(editingMovement.subcategory || 'General');
+      } else {
+        setType(initialType);
+        setAmount('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setDescription('');
+        if (categories.length > 0) {
+          setSelectedCategoryCode(categories[0].id);
+          if (categories[0].subcategories.length > 0) {
+            setSubcategory(categories[0].subcategories[0].name);
+          }
         }
       }
     }
-  }, [isOpen, initialType, categories]);
+  }, [isOpen, initialType, categories, editingMovement]);
 
   if (!isOpen) return null;
 
@@ -54,7 +85,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
+    const parsedAmount = parseAmount(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       alert('Por favor ingrese un importe válido.');
       return;
@@ -94,7 +125,11 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
               {type === 'ingreso' ? 'add_circle' : 'remove_circle'}
             </span>
             <h4 className="font-bold text-xl md:text-2xl">
-              {type === 'ingreso' ? 'Nuevo Ingreso' : 'Nuevo Gasto'}
+              {editingMovement
+                ? `Editar ${type === 'ingreso' ? 'Ingreso' : 'Gasto'}`
+                : type === 'ingreso'
+                  ? 'Nuevo Ingreso'
+                  : 'Nuevo Gasto'}
             </h4>
           </div>
           <button
@@ -137,8 +172,8 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
           <div className="space-y-1">
             <label className="block font-semibold text-base text-on-surface">Importe (€)</label>
             <input
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -198,11 +233,18 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
               className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
             >
               {currentCategoryObj && currentCategoryObj.subcategories.length > 0 ? (
-                currentCategoryObj.subcategories.map((sub) => (
-                  <option key={sub.id} value={sub.name}>
-                    {sub.name}
-                  </option>
-                ))
+                <>
+                  {editingMovement &&
+                  editingMovement.subcategory &&
+                  !currentCategoryObj.subcategories.some((s) => s.name === editingMovement.subcategory) ? (
+                    <option value={editingMovement.subcategory}>{editingMovement.subcategory}</option>
+                  ) : null}
+                  {currentCategoryObj.subcategories.map((sub) => (
+                    <option key={sub.id} value={sub.name}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </>
               ) : (
                 <option value="General">General</option>
               )}
@@ -226,7 +268,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                   : 'bg-primary border-primary hover:bg-primary-container'
               }`}
             >
-              Guardar Entrada
+              {editingMovement ? 'Guardar Cambios' : 'Guardar Entrada'}
             </button>
           </div>
         </form>

@@ -75,28 +75,30 @@ const routes = {
   },
   'GET /conta/api/movements.php': (req, res) => {
     const url = new URL(req.url, 'http://localhost');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const pageSize = 8;
     const catId = parseInt(url.searchParams.get('category_id')) || 0;
     const search = (url.searchParams.get('search') || '').toLowerCase();
     let filtered = movements;
     if (catId) filtered = filtered.filter(m => m.category_id === catId);
     if (search) filtered = filtered.filter(m => m.description.toLowerCase().includes(search));
     filtered.sort((a, b) => b.id - a.id);
-    const totalRecords = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
-    const offset = (page - 1) * pageSize;
-    const pageData = filtered.slice(offset, offset + pageSize);
     let income = 0, expense = 0, balance = 0;
     filtered.forEach(m => { if (m.type === 'ingreso') { income += m.amount; balance += m.amount; } else { expense += m.amount; balance -= m.amount; } });
     respond(res, {
-      movements: pageData.map(m => ({ ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, subcategory: subMap[m.subcategory_id]?.name || '' })),
+      movements: filtered.map(m => ({ ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, subcategory: subMap[m.subcategory_id]?.name || '' })),
       totals: { income, expense, balance },
-      pagination: { page, page_size: pageSize, total_records: totalRecords, total_pages: totalPages }
+      pagination: { page: 1, page_size: filtered.length, total_records: filtered.length, total_pages: 1 }
     });
   },
   'POST /conta/api/movements.php': async (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
     const data = await parseBody(req);
+    if (url.searchParams.get('_method') === 'PUT') {
+      const idx = movements.findIndex(m => m.id === data.id);
+      if (idx === -1) return respond(res, { error: 'Movimiento no encontrado' }, 404);
+      movements[idx] = { ...movements[idx], date: data.date, category_id: data.category_id, subcategory_id: data.subcategory_id || null, description: data.description, type: data.type, amount: data.amount };
+      const m = movements[idx];
+      return respond(res, { ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, subcategory: subMap[m.subcategory_id]?.name || '' });
+    }
     const id = Math.max(...movements.map(m => m.id), 0) + 1;
     const m = { id, date: data.date, category_id: data.category_id, subcategory_id: data.subcategory_id || null, description: data.description, type: data.type, amount: data.amount };
     movements.unshift(m);
@@ -138,7 +140,8 @@ const routes = {
     }
   },
   'GET /conta/api/export.php': (req, res) => {
-    const csv = ['Fecha,Categoría,Código,Subcategoría,Descripción,Tipo,Importe', ...movements.map(m => `${m.date},${catMap[m.category_id]?.name},${catMap[m.category_id]?.code},${subMap[m.subcategory_id]?.name || ''},${m.description},${m.type},${m.amount}`)].join('\n');
+    const formatAmount = (n) => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const csv = ['Fecha,Categoría,Código,Subcategoría,Descripción,Tipo,Importe', ...movements.map(m => `${m.date},${catMap[m.category_id]?.name},${catMap[m.category_id]?.code},${subMap[m.subcategory_id]?.name || ''},${m.description},${m.type},${formatAmount(m.amount)}`)].join('\n');
     res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
     res.end('\uFEFF' + csv);
   },

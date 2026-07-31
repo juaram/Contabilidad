@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Movement, UserPreferences } from '../types';
 
 interface InicioViewProps {
@@ -21,15 +21,22 @@ export const InicioView: React.FC<InicioViewProps> = ({
     return '€';
   }, [preferences.currency]);
 
-  // Format currency value
-  const formatCurrency = (val: number, showSign = false) => {
-    const formatted = val.toLocaleString('es-ES', {
+  // Format amount with decimal comma and thousands dot
+  const formatAmount = (val: number) => {
+    return val.toLocaleString('es-ES', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  };
+
+  // Format currency value
+  const formatCurrency = (val: number, showSign = false) => {
+    const formatted = formatAmount(val);
     const sign = showSign && val > 0 ? '+ ' : val < 0 ? '- ' : '';
     return `${sign}${formatted}${currencySymbol}`;
   };
+
+  const [chartTooltip, setChartTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
 
   // Compute Current Total Balance
   const totalBalance = useMemo(() => {
@@ -114,7 +121,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
     <div className="flex flex-col w-full max-w-[1400px] mx-auto pb-12">
       {/* Top Section: Balance + Action Buttons */}
       <section className="px-4 md:px-margin-desktop py-8 md:py-stack-lg relative overflow-hidden">
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
           <div className="flex flex-col gap-2">
             <span className="font-semibold text-sm md:text-base text-on-surface-variant uppercase tracking-widest">
               Saldo Actual
@@ -135,31 +142,33 @@ export const InicioView: React.FC<InicioViewProps> = ({
             </p>
           </div>
 
-          <button
-            onClick={() => onOpenAddModal('ingreso')}
-            className="group flex items-center justify-between p-4 md:p-6 bg-secondary text-on-secondary rounded-xl transition-all hover:scale-[1.01] active:scale-95 border-4 border-transparent focus:border-primary cursor-pointer shadow-sm"
-          >
-            <div className="flex items-center gap-4 md:gap-6">
-              <span className="material-symbols-outlined text-3xl md:text-[48px]">add_circle</span>
-              <span className="font-bold text-xl md:text-2xl">Añadir Ingreso</span>
-            </div>
-            <span className="material-symbols-outlined text-2xl md:text-[36px] opacity-70 group-hover:opacity-100 transition-opacity">
-              arrow_forward_ios
-            </span>
-          </button>
+          <div className="flex flex-col md:items-end gap-4">
+            <button
+              onClick={() => onOpenAddModal('ingreso')}
+              className="group flex items-center justify-between w-full md:w-auto min-w-[320px] p-4 md:p-6 bg-secondary text-on-secondary rounded-xl transition-all hover:scale-[1.01] active:scale-95 border-4 border-transparent focus:border-primary cursor-pointer shadow-sm"
+            >
+              <div className="flex items-center gap-4 md:gap-6">
+                <span className="material-symbols-outlined text-3xl md:text-[48px]">add_circle</span>
+                <span className="font-bold text-xl md:text-2xl">Añadir Ingreso</span>
+              </div>
+              <span className="material-symbols-outlined text-2xl md:text-[36px] opacity-70 group-hover:opacity-100 transition-opacity">
+                arrow_forward_ios
+              </span>
+            </button>
 
-          <button
-            onClick={() => onOpenAddModal('gasto')}
-            className="group flex items-center justify-between p-4 md:p-6 bg-error text-on-error rounded-xl transition-all hover:scale-[1.01] active:scale-95 border-4 border-transparent focus:border-primary cursor-pointer shadow-sm"
-          >
-            <div className="flex items-center gap-4 md:gap-6">
-              <span className="material-symbols-outlined text-3xl md:text-[48px]">remove_circle</span>
-              <span className="font-bold text-xl md:text-2xl">Añadir Gasto</span>
-            </div>
-            <span className="material-symbols-outlined text-2xl md:text-[36px] opacity-70 group-hover:opacity-100 transition-opacity">
-              arrow_forward_ios
-            </span>
-          </button>
+            <button
+              onClick={() => onOpenAddModal('gasto')}
+              className="group flex items-center justify-between w-full md:w-auto min-w-[320px] p-4 md:p-6 bg-error text-on-error rounded-xl transition-all hover:scale-[1.01] active:scale-95 border-4 border-transparent focus:border-primary cursor-pointer shadow-sm"
+            >
+              <div className="flex items-center gap-4 md:gap-6">
+                <span className="material-symbols-outlined text-3xl md:text-[48px]">remove_circle</span>
+                <span className="font-bold text-xl md:text-2xl">Añadir Gasto</span>
+              </div>
+              <span className="material-symbols-outlined text-2xl md:text-[36px] opacity-70 group-hover:opacity-100 transition-opacity">
+                arrow_forward_ios
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Subtle Background Blur Decoration */}
@@ -174,25 +183,6 @@ export const InicioView: React.FC<InicioViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Income Card */}
-          <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
-                Haber (Ingresos)
-              </span>
-              <span className="material-symbols-outlined text-secondary text-4xl md:text-[48px]">trending_up</span>
-            </div>
-            <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
-              + {monthlyStats.income.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
-            </span>
-            <div className="w-full bg-surface-container h-6 rounded-full overflow-hidden">
-              <div
-                className="bg-secondary h-full transition-all duration-1000"
-                style={{ width: `${incomePercent}%` }}
-              />
-            </div>
-          </div>
-
           {/* Expense Card */}
           <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
             <div className="flex justify-between items-center">
@@ -202,12 +192,31 @@ export const InicioView: React.FC<InicioViewProps> = ({
               <span className="material-symbols-outlined text-error text-4xl md:text-[48px]">trending_down</span>
             </div>
             <span className="font-bold text-4xl md:text-[56px] text-error tabular-nums">
-              - {monthlyStats.expense.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+              - {formatAmount(monthlyStats.expense)}€
             </span>
             <div className="w-full bg-surface-container h-6 rounded-full overflow-hidden">
               <div
                 className="bg-error h-full transition-all duration-1000"
                 style={{ width: `${expensePercent}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Income Card */}
+          <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
+                Haber (Ingresos)
+              </span>
+              <span className="material-symbols-outlined text-secondary text-4xl md:text-[48px]">trending_up</span>
+            </div>
+            <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
+              + {formatAmount(monthlyStats.income)}€
+            </span>
+            <div className="w-full bg-surface-container h-6 rounded-full overflow-hidden">
+              <div
+                className="bg-secondary h-full transition-all duration-1000"
+                style={{ width: `${incomePercent}%` }}
               />
             </div>
           </div>
@@ -225,24 +234,24 @@ export const InicioView: React.FC<InicioViewProps> = ({
           <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
-                Ingresos
+                Gastos
               </span>
-              <span className="material-symbols-outlined text-secondary text-4xl md:text-[48px]">trending_up</span>
+              <span className="material-symbols-outlined text-error text-4xl md:text-[48px]">trending_down</span>
             </div>
-            <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
-              + {yearlyStats.income.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+            <span className="font-bold text-4xl md:text-[56px] text-error tabular-nums">
+              - {formatAmount(yearlyStats.expense)}€
             </span>
           </div>
 
           <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
-                Gastos
+                Ingresos
               </span>
-              <span className="material-symbols-outlined text-error text-4xl md:text-[48px]">trending_down</span>
+              <span className="material-symbols-outlined text-secondary text-4xl md:text-[48px]">trending_up</span>
             </div>
-            <span className="font-bold text-4xl md:text-[56px] text-error tabular-nums">
-              - {yearlyStats.expense.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+            <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
+              + {formatAmount(yearlyStats.income)}€
             </span>
           </div>
         </div>
@@ -274,17 +283,33 @@ export const InicioView: React.FC<InicioViewProps> = ({
               const expenseH = maxAmount > 0 ? (item.expense / maxAmount) * 100 : 0;
               const isCurrent = item.month === now.getMonth();
               return (
-                <div key={item.month} className="flex-1 flex flex-col items-center gap-2 group min-w-0">
-                  <div className="w-full flex flex-col justify-end gap-0.5" style={{ height: '100%' }}>
+                <div key={item.month} className="flex-1 h-full flex flex-col items-center gap-2 group min-w-0">
+                  <div className="w-full flex-1 flex flex-col justify-end gap-0.5">
                     <div
-                      className="w-full bg-error/30 rounded-t-sm transition-all duration-500 group-hover:opacity-80"
-                      style={{ height: `${expenseH}%` }}
-                      title={`Gastos: ${item.expense.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`}
+                      className="w-full bg-error rounded-t-sm transition-all duration-500 group-hover:opacity-80"
+                      style={{ height: `${expenseH}%`, minHeight: expenseH > 0 ? '0.25rem' : 0 }}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setChartTooltip({
+                          text: `Gastos: ${formatAmount(item.expense)}${currencySymbol}`,
+                          x: rect.left,
+                          y: rect.bottom + 8,
+                        });
+                      }}
+                      onMouseLeave={() => setChartTooltip(null)}
                     />
                     <div
-                      className={`w-full rounded-t-sm transition-all duration-500 ${isCurrent ? 'bg-secondary' : 'bg-primary'}`}
-                      style={{ height: `${incomeH}%` }}
-                      title={`Ingresos: ${item.income.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`}
+                      className="w-full bg-secondary rounded-t-sm transition-all duration-500"
+                      style={{ height: `${incomeH}%`, minHeight: incomeH > 0 ? '0.25rem' : 0 }}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setChartTooltip({
+                          text: `Ingresos: ${formatAmount(item.income)}${currencySymbol}`,
+                          x: rect.left,
+                          y: rect.bottom + 8,
+                        });
+                      }}
+                      onMouseLeave={() => setChartTooltip(null)}
                     />
                   </div>
                   <span className={`font-medium text-xs md:text-sm text-on-surface-variant uppercase ${isCurrent ? 'font-bold text-secondary' : ''}`}>
@@ -298,11 +323,11 @@ export const InicioView: React.FC<InicioViewProps> = ({
           {/* Chart Legend */}
           <div className="mt-6 md:mt-8 flex flex-wrap justify-center gap-6 md:gap-12 border-t-2 border-outline-variant pt-4 md:pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 bg-primary rounded-sm" />
+              <div className="w-5 h-5 bg-secondary rounded-sm" />
               <span className="font-medium text-sm md:text-base text-on-surface-variant">Ingresos</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 bg-error/30 rounded-sm" />
+              <div className="w-5 h-5 bg-error rounded-sm" />
               <span className="font-medium text-sm md:text-base text-on-surface-variant">Gastos</span>
             </div>
           </div>
@@ -358,7 +383,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
                       isIncome ? 'text-secondary' : 'text-error'
                     }`}
                   >
-                    {isIncome ? '+' : '-'}{mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                    {isIncome ? '+' : '-'}{formatAmount(mov.amount)}€
                   </span>
                 </div>
               );
@@ -374,6 +399,16 @@ export const InicioView: React.FC<InicioViewProps> = ({
           Ver todos los movimientos
         </button>
       </section>
+
+      {/* Tooltip for chart bars */}
+      {chartTooltip && (
+        <div
+          className="fixed z-50 px-4 py-2 bg-inverse-surface text-inverse-on-surface font-medium text-sm rounded-lg shadow-lg pointer-events-none"
+          style={{ left: chartTooltip.x, top: chartTooltip.y }}
+        >
+          {chartTooltip.text}
+        </div>
+      )}
     </div>
   );
 };

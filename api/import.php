@@ -2,6 +2,32 @@
 
 require_once __DIR__ . '/config.php';
 
+function parseAmount(string $s): float
+{
+    $s = trim($s);
+    $s = str_replace(' ', '', $s);
+    $s = preg_replace('/[^0-9.,]/', '', $s);
+
+    $hasComma = strpos($s, ',') !== false;
+    $hasDot = strpos($s, '.') !== false;
+
+    if ($hasComma && $hasDot) {
+        // Separador decimal = coma, separador de miles = punto
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+    } elseif ($hasComma) {
+        $s = str_replace(',', '.', $s);
+    } elseif ($hasDot && substr_count($s, '.') === 1 && preg_match('/\.\d{1,2}$/', $s)) {
+        // Un único punto al final: se interpreta como decimal
+        $s = str_replace(',', '.', $s);
+    } elseif ($hasDot) {
+        // Múltiples puntos: se interpretan como separadores de miles
+        $s = str_replace('.', '', $s);
+    }
+
+    return (float) $s;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Método no permitido', 405);
 }
@@ -43,9 +69,10 @@ $insertMov = $pdo->prepare("
     VALUES (:date, :category_id, :subcategory_id, :description, :type, :amount)
 ");
 
+// Pass 1: validate every row BEFORE inserting anything.
 $lineNum = 1;
-$imported = 0;
-$errors = [];
+$validRows = [];
+$invalidRecords = [];
 
 while (($row = fgetcsv($handle, 0, ';')) !== false) {
     $lineNum++;
@@ -58,24 +85,35 @@ while (($row = fgetcsv($handle, 0, ';')) !== false) {
     $type = $row[$colMap['Tipo']] ?? '';
     $amountStr = $row[$colMap['Importe']] ?? '';
 
+    $recordInfo = [
+        'line' => $lineNum,
+        'date' => $dateRaw,
+        'category' => $catName,
+        'subcategory' => $subName,
+        'description' => $desc,
+        'type' => $type,
+        'amount' => $amountStr,
+        'reason' => '',
+    ];
+
     if (empty($dateRaw) || empty($catName) || empty($type) || empty($amountStr)) {
-        $errors[] = "Línea $lineNum: campos obligatorios vacíos";
+        $recordInfo['reason'] = 'Campos obligatorios vacíos';
+        $invalidRecords[] = $recordInfo;
         continue;
     }
 
-    $parts = explode('/', $dateRaw);
-    $date = count($parts) === 3 ? "$parts[2]-$parts[1]-$parts[0]" : $dateRaw;
-
-    $amount = str_replace(['.', ','], ['', '.'], $amountStr);
-    if (!is_numeric($amount)) {
-        $errors[] = "Línea $lineNum: importe inválido '$amountStr'";
+    $amount = parseAmount($amountStr);
+    if (!is_numeric($amount) || $amount <= 0) {
+        $recordInfo['reason'] = "Importe inválido '$amountStr'";
+        $invalidRecords[] = $recordInfo;
         continue;
     }
 
     $stmtCat->execute([':name' => $catName]);
     $cat = $stmtCat->fetch();
     if (!$cat) {
-        $errors[] = "Línea $lineNum: categoría '$catName' no encontrada";
+        $recordInfo['reason'] = "Categoría '$catName' no encontrada";
+        $invalidRecords[] = $recordInfo;
         continue;
     }
 
@@ -83,26 +121,47 @@ while (($row = fgetcsv($handle, 0, ';')) !== false) {
     if (!empty($subName)) {
         $stmtSub->execute([':name' => $subName, ':cat_id' => $cat['id']]);
         $sub = $stmtSub->fetch();
-        if ($sub) {
-            $subId = $sub['id'];
+        if (!$sub) {
+            $recordInfo['reason'] = "Subcategoría '$subName' no encontrada en la categoría '$catName'";
+            $invalidRecords[] = $recordInfo;
+            continue;
         }
+        $subId = $sub['id'];
     }
 
-    $insertMov->execute([
+    $parts = explode('/', $dateRaw);
+    $date = count($parts) === 3 ? "$parts[2]-$parts[1]-$parts[0]" : $dateRaw;
+
+    $validRows[] = [
         ':date' => $date,
         ':category_id' => $cat['id'],
         ':subcategory_id' => $subId,
         ':description' => $desc,
         ':type' => $type,
         ':amount' => (float) $amount,
-    ]);
-    $imported++;
+    ];
 }
 
 fclose($handle);
 
+// If any record fails validation, do NOT insert anything and list the problems.
+if (count($invalidRecords) > 0) {
+    jsonResponse([
+        'success' => false,
+        'message' => count($invalidRecords) . ' registro(s) no cumplen las validaciones. No se ha importado nada.',
+        'invalid_records' => $invalidRecords,
+    ], 422);
+}
+
+// Pass 2: all records are valid, insert them.
+$imported = 0;
+foreach ($validRows as $params) {
+    $insertMov->execute($params);
+    $imported++;
+}
+
 jsonResponse([
+    'success' => true,
     'message' => "Se importaron $imported movimientos correctamente",
     'imported' => $imported,
-    'errors' => $errors,
 ]);

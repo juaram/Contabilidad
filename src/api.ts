@@ -104,6 +104,23 @@ export async function createMovement(data: {
   });
 }
 
+export async function updateMovement(
+  id: number,
+  data: {
+    date: string;
+    category_id: number;
+    subcategory_id?: number | null;
+    description: string;
+    type: 'ingreso' | 'gasto';
+    amount: number;
+  }
+): Promise<Movement> {
+  return request<Movement>('movements.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, ...data }),
+  });
+}
+
 export async function deleteMovement(id: number): Promise<void> {
   await request(`movements.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }

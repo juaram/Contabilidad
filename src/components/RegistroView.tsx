@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
-import { Category, FilterState, Movement, UserPreferences } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Category, Movement, UserPreferences } from '../types';
+import { ConfirmarEliminarModal } from './ConfirmarEliminarModal';
 
 interface RegistroViewProps {
   movements: Movement[];
   categories: Category[];
   preferences: UserPreferences;
   onOpenAddModal: () => void;
+  onEditMovement: (movement: Movement) => void;
   onDeleteMovement: (id: string) => void;
-  onExportPDF: () => void;
 }
 
 export const RegistroView: React.FC<RegistroViewProps> = ({
@@ -15,14 +16,10 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   categories,
   preferences,
   onOpenAddModal,
+  onEditMovement,
   onDeleteMovement,
-  onExportPDF,
 }) => {
-  const [selectedYear, setSelectedYear] = useState<number>(() => {
-    const years = movements.map((m) => new Date(m.date).getFullYear()).filter((y) => !isNaN(y));
-    const max = Math.max(...years);
-    return isFinite(max) ? max : new Date().getFullYear();
-  });
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
@@ -38,8 +35,18 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('todas');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const pageSize = 8;
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Currency symbol
   const currencySymbol = useMemo(() => {
@@ -50,17 +57,18 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
   // Reset Filters
   const handleResetFilters = () => {
-    setSelectedYear(availableYears[0]);
+    setSelectedYear(new Date().getFullYear());
     setSelectedMonth('todos');
     setSelectedCategory('todas');
     setSelectedSubcategory('todas');
     setSearchQuery('');
-    setCurrentPage(1);
   };
 
-  // Available subcategories for selected category filter
+  // Available subcategories: from the selected category, or all categories if none selected
   const availableSubcategories = useMemo(() => {
-    if (selectedCategory === 'todas') return [];
+    if (selectedCategory === 'todas') {
+      return categories.flatMap((c) => c.subcategories);
+    }
     const cat = categories.find((c) => c.id === selectedCategory || c.name === selectedCategory);
     return cat ? cat.subcategories : [];
   }, [categories, selectedCategory]);
@@ -73,7 +81,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       const year = d.getFullYear() || 2024;
       const month = String(d.getMonth() + 1).padStart(2, '0');
 
-      if (year !== selectedYear) return false;
+      if (selectedYear !== 0 && year !== selectedYear) return false;
 
       if (selectedMonth !== 'todos' && month !== selectedMonth) return false;
 
@@ -98,7 +106,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       }
 
       return true;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
   }, [movements, selectedYear, selectedMonth, selectedCategory, selectedSubcategory, searchQuery]);
 
   // Calculate Running Balance and Totals
@@ -108,7 +116,12 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     let incSum = 0;
 
     // Process chronologically for running balance
-    const chrono = [...filteredMovements].reverse();
+    const chrono = [...filteredMovements]
+      .sort((a, b) => {
+        const dateCmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateCmp !== 0) return dateCmp;
+        return Number(a.id) - Number(b.id);
+      });
     const rowsWithBalance = chrono.map((m) => {
       if (m.type === 'ingreso') {
         running += m.amount;
@@ -120,20 +133,21 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       return { ...m, balanceAfter: running };
     });
 
+    // Display sort: by date (asc/desc) with ID as tiebreaker
+    const dir = sortOrder === 'asc' ? 1 : -1;
+    const tableRows = [...rowsWithBalance].sort((a, b) => {
+      const dateCmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateCmp !== 0) return dateCmp * dir;
+      return (Number(a.id) - Number(b.id)) * dir;
+    });
+
     return {
-      tableRows: rowsWithBalance.reverse(), // most recent first
+      tableRows,
       totalExpense: expSum,
       totalIncome: incSum,
       finalBalance: running,
     };
-  }, [filteredMovements]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(tableRows.length / pageSize));
-  const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return tableRows.slice(start, start + pageSize);
-  }, [tableRows, currentPage, pageSize]);
+  }, [filteredMovements, sortOrder]);
 
   return (
     <div className="flex flex-col w-full pb-16">
@@ -151,13 +165,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             </div>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={onExportPDF}
-                className="flex items-center gap-2 px-5 h-14 bg-white border-2 border-primary text-primary font-semibold text-base rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors cursor-pointer shadow-sm"
-              >
-                <span className="material-symbols-outlined text-[20px]">download</span>
-                <span>Exportar PDF</span>
-              </button>
-              <button
                 onClick={onOpenAddModal}
                 className="flex items-center gap-2 px-5 h-14 bg-primary text-on-primary font-semibold text-base rounded-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer shadow-sm"
               >
@@ -168,15 +175,24 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           </div>
 
           {/* Year Selector Tabs & Filters */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sticky top-24 z-40 bg-surface-container-low -mx-4 md:-mx-margin-desktop px-4 md:px-margin-desktop py-4 border-b-2 border-outline-variant">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedYear(0)}
+                  className={`px-6 h-12 font-bold text-base rounded-lg border-2 transition-all cursor-pointer ${
+                    selectedYear === 0
+                      ? 'bg-primary text-on-primary border-primary shadow-sm'
+                      : 'bg-white text-on-surface border-outline-variant hover:border-primary'
+                  }`}
+                >
+                  Todos los años
+                </button>
                 {availableYears.map((year) => (
                   <button
                     key={year}
                     onClick={() => {
                       setSelectedYear(year);
-                      setCurrentPage(1);
                     }}
                     className={`px-8 h-12 font-bold text-base rounded-lg border-2 transition-all cursor-pointer ${
                       selectedYear === year
@@ -199,7 +215,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   value={selectedMonth}
                   onChange={(e) => {
                     setSelectedMonth(e.target.value);
-                    setCurrentPage(1);
                   }}
                   className="bg-transparent font-medium text-base outline-none cursor-pointer pr-2"
                 >
@@ -225,7 +240,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 onChange={(e) => {
                   setSelectedCategory(e.target.value);
                   setSelectedSubcategory('todas');
-                  setCurrentPage(1);
                 }}
                 className="h-12 px-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer"
               >
@@ -242,10 +256,8 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 value={selectedSubcategory}
                 onChange={(e) => {
                   setSelectedSubcategory(e.target.value);
-                  setCurrentPage(1);
                 }}
-                disabled={selectedCategory === 'todas'}
-                className="h-12 px-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer disabled:opacity-50"
+                className="h-12 px-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer"
               >
                 <option value="todas">Subcategoría (Todas)</option>
                 {availableSubcategories.map((sub) => (
@@ -274,7 +286,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setCurrentPage(1);
                   }}
                   placeholder="Buscar descripción..."
                   className="w-full h-12 pl-10 pr-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none"
@@ -287,16 +298,22 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
       {/* Ledger Table Section */}
       <section className="px-4 md:px-margin-desktop py-stack-lg">
-        <div className="max-w-[1100px] mx-auto">
+        <div className="w-full">
           <div className="bg-white border-2 border-outline-variant rounded-xl overflow-x-auto shadow-sm">
             <table className="w-full border-collapse text-left min-w-[800px]">
               <thead>
                 <tr className="bg-surface-container text-on-surface-variant border-b-2 border-outline-variant">
                   <th className="px-6 py-4 font-semibold text-base w-[130px]">
-                    <div className="flex items-center justify-between gap-1">
+                    <button
+                      onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                      className="w-full flex items-center justify-between gap-1 cursor-pointer group"
+                      title={sortOrder === 'desc' ? 'Ordenar fecha: descendente (más reciente)' : 'Ordenar fecha: ascendente (más antigua)'}
+                    >
                       <span>Fecha</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
-                    </div>
+                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 group-hover:opacity-100 transition-opacity text-[18px]">
+                        {sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+                      </span>
+                    </button>
                   </th>
                   <th className="px-4 py-4 font-semibold text-base w-[110px]">
                     <div className="flex items-center justify-between gap-1">
@@ -334,19 +351,21 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="w-12 py-4"></th>
+                  <th className="w-24 py-4 text-right pr-4">
+                    <span className="text-on-surface-variant font-semibold text-base">Acciones</span>
+                  </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y-2 divide-outline-variant">
-                {paginatedRows.length === 0 ? (
+                {tableRows.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-on-surface-variant text-lg">
                       No se encontraron registros para los filtros seleccionados.
                     </td>
                   </tr>
                 ) : (
-                  paginatedRows.map((mov) => {
+                  tableRows.map((mov) => {
                     const isSelected = highlightedRowId === mov.id;
                     const isExpense = mov.type === 'gasto';
 
@@ -360,13 +379,13 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                             : 'hover:bg-surface-container-low text-on-surface'
                         }`}
                       >
-                        <td className="px-6 py-5 font-normal text-base whitespace-nowrap">
+                        <td className="px-6 py-2 font-normal text-base whitespace-nowrap">
                           {mov.date.includes('-')
                             ? mov.date.split('-').reverse().join('/')
                             : mov.date}
                         </td>
 
-                        <td className="px-4 py-5 font-semibold text-sm">
+                        <td className="px-4 py-2 font-semibold text-sm">
                           <span className={`px-2 py-1 rounded ${
                             isSelected
                               ? 'bg-white/20 text-white'
@@ -376,15 +395,31 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           </span>
                         </td>
 
-                        <td className="px-4 py-5 font-medium text-base">
+                        <td className="px-4 py-2 font-medium text-base">
                           {mov.subcategory}
                         </td>
 
-                        <td className="px-6 py-5 font-medium text-lg">
-                          {mov.description}
+                        <td className="px-6 py-2 font-medium text-base">
+                          <span
+                            onMouseEnter={(e) => {
+                              const el = e.currentTarget;
+                              if (el.scrollWidth > el.clientWidth) {
+                                const rect = el.getBoundingClientRect();
+                                setTooltip({
+                                  text: mov.description,
+                                  x: rect.left,
+                                  y: rect.bottom + 8,
+                                });
+                              }
+                            }}
+                            onMouseLeave={() => setTooltip(null)}
+                            className="block max-w-[420px] truncate"
+                          >
+                            {mov.description}
+                          </span>
                         </td>
 
-                        <td className="px-6 py-5 font-bold text-lg text-right whitespace-nowrap">
+                        <td className="px-6 py-2 font-bold text-base text-right whitespace-nowrap">
                           {isExpense ? (
                             <span className={isSelected ? 'text-tertiary-fixed-dim' : 'text-error'}>
                               {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
@@ -394,7 +429,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           )}
                         </td>
 
-                        <td className="px-6 py-5 font-bold text-lg text-right whitespace-nowrap">
+                        <td className="px-6 py-2 font-bold text-base text-right whitespace-nowrap">
                           {!isExpense ? (
                             <span className={isSelected ? 'text-secondary-container' : 'text-secondary'}>
                               {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
@@ -404,7 +439,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           )}
                         </td>
 
-                        <td className={`px-6 py-5 font-bold text-xl text-right whitespace-nowrap ${
+                        <td className={`px-6 py-2 font-bold text-lg text-right whitespace-nowrap ${
                           isSelected ? 'bg-primary-container/40 text-white' : 'bg-surface-container-low text-primary'
                         }`}>
                           {mov.balanceAfter !== undefined
@@ -412,17 +447,29 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                             : '-'}
                         </td>
 
-                        <td className="px-2 py-5 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteMovement(mov.id);
-                            }}
-                            title="Eliminar movimiento"
-                            className={`p-1 rounded hover:bg-error/20 ${isSelected ? 'text-white' : 'text-outline hover:text-error'}`}
-                          >
-                            <span className="material-symbols-outlined text-[20px]">delete</span>
-                          </button>
+                        <td className="px-2 py-2 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditMovement(mov);
+                              }}
+                              title="Editar movimiento"
+                              className={`p-1 rounded hover:bg-secondary/20 ${isSelected ? 'text-white' : 'text-outline hover:text-secondary'}`}
+                            >
+                              <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(mov);
+                              }}
+                              title="Eliminar movimiento"
+                              className={`p-1 rounded hover:bg-error/20 ${isSelected ? 'text-white' : 'text-outline hover:text-error'}`}
+                            >
+                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -449,37 +496,15 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             </table>
           </div>
 
-          {/* Pagination & Legend */}
-          <div className="mt-stack-md flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-6 text-on-surface-variant font-medium text-base">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-secondary border border-outline rounded-xs" />
-                <span>Ingresos (Haber)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-error border border-outline rounded-xs" />
-                <span>Gastos (Debe)</span>
-              </div>
+          {/* Legend */}
+          <div className="mt-stack-md flex items-center gap-6 text-on-surface-variant font-medium text-base">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-secondary border border-outline rounded-xs" />
+              <span>Ingresos (Haber)</span>
             </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="w-12 h-12 flex items-center justify-center border-2 border-outline-variant hover:border-primary text-on-surface transition-all rounded-lg disabled:opacity-30 cursor-pointer"
-              >
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-              <span className="font-semibold text-base px-2">
-                Página {currentPage} de {totalPages}
-              </span>
-              <button
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="w-12 h-12 flex items-center justify-center border-2 border-outline-variant hover:border-primary text-on-surface transition-all rounded-lg disabled:opacity-30 cursor-pointer"
-              >
-                <span className="material-symbols-outlined">chevron_right</span>
-              </button>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-error border border-outline rounded-xs" />
+              <span>Gastos (Debe)</span>
             </div>
           </div>
         </div>
@@ -494,7 +519,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
               Presupuesto Mensual
             </span>
             <div className="flex items-end justify-between">
-              <span className="font-bold text-3xl text-primary">1,800.00 {currencySymbol}</span>
+              <span className="font-bold text-3xl text-primary">1.800,00 {currencySymbol}</span>
               <span className="font-semibold text-base text-secondary">68% restante</span>
             </div>
             <div className="w-full bg-surface-container-high h-4 rounded-full mt-2 overflow-hidden">
@@ -507,7 +532,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-wider">
               Gasto Promedio Día
             </span>
-            <span className="font-bold text-3xl text-primary">24.50 {currencySymbol}</span>
+            <span className="font-bold text-3xl text-primary">24,50 {currencySymbol}</span>
             <span className="text-sm text-on-surface-variant italic">
               Basado en los últimos 30 días
             </span>
@@ -523,13 +548,46 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-wider">
               Ahorro este Año
             </span>
-            <span className="font-bold text-3xl text-secondary">+ 4,250.00 {currencySymbol}</span>
+            <span className="font-bold text-3xl text-secondary">+ 4.250,00 {currencySymbol}</span>
             <span className="font-semibold text-xs text-on-secondary-container bg-secondary-container px-3 py-1 self-start rounded-lg">
               Excelente progreso
             </span>
           </div>
         </div>
       </section>
+
+      {/* Tooltip for description */}
+      {tooltip && (
+        <div
+          className="fixed z-50 max-w-[320px] px-4 py-2 bg-inverse-surface text-inverse-on-surface font-medium text-sm rounded-lg shadow-lg pointer-events-none"
+          style={{ left: tooltip.x, top: tooltip.y }}
+        >
+          {tooltip.text}
+        </div>
+      )}
+
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Ir hacia arriba"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[28px]">arrow_upward</span>
+        </button>
+      )}
+
+      {/* Delete confirmation modal */}
+      <ConfirmarEliminarModal
+        isOpen={deleteTarget !== null}
+        movement={deleteTarget}
+        currencySymbol={currencySymbol}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) onDeleteMovement(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 };

@@ -33,7 +33,7 @@ foreach ($movements as $m) {
         $m['subcategory'] ?? '',
         $m['description'],
         $m['type'],
-        number_format((float) $m['amount'], 2, '.', ''),
+        number_format((float) $m['amount'], 2, ',', '.'),
     ], ';');
 }
 

@@ -8,6 +8,7 @@ import { NuevaEntradaModal } from './components/NuevaEntradaModal';
 import { NuevaCategoriaModal } from './components/NuevaCategoriaModal';
 import { HelpModal } from './components/HelpModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { ImportacionErroresModal, InvalidRecord } from './components/ImportacionErroresModal';
 import { Category, Movement, MovementType, UserPreferences } from './types';
 import * as api from './api';
 
@@ -28,6 +29,7 @@ export default function App() {
 
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [entryModalType, setEntryModalType] = useState<MovementType>('gasto');
+  const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalMode, setCategoryModalMode] = useState<'category' | 'subcategory'>('category');
   const [parentCategoryForSub, setParentCategoryForSub] = useState<string>('');
@@ -35,11 +37,12 @@ export default function App() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [importErrors, setImportErrors] = useState<InvalidRecord[]>([]);
 
   useEffect(() => {
     Promise.all([
       api.fetchCategories(),
-      api.fetchMovements({ year: '', month: '', page: 1 }),
+      api.fetchMovements({ year: '', month: '' }),
       api.fetchPreferences(),
     ]).then(([cats, movData, prefs]) => {
       setCategories(cats.map(normalizeCategory));
@@ -62,7 +65,14 @@ export default function App() {
   };
 
   const handleOpenAddEntryModal = (type: MovementType = 'gasto') => {
+    setEditingMovement(null);
     setEntryModalType(type);
+    setIsEntryModalOpen(true);
+  };
+
+  const handleOpenEditEntryModal = (movement: Movement) => {
+    setEditingMovement(movement);
+    setEntryModalType(movement.type);
     setIsEntryModalOpen(true);
   };
 
@@ -70,16 +80,30 @@ export default function App() {
     try {
       const catId = parseInt(newMovData.category_id as any) || 0;
       const subId = newMovData.subcategory_id ? parseInt(newMovData.subcategory_id as any) : null;
-      const saved = await api.createMovement({
-        date: newMovData.date,
-        category_id: catId,
-        subcategory_id: subId,
-        description: newMovData.description,
-        type: newMovData.type,
-        amount: newMovData.amount,
-      });
-      setMovements((prev) => [normalizeMovement(saved), ...prev]);
-      showToast(`✓ ${newMovData.type === 'ingreso' ? 'Ingreso' : 'Gasto'} registrado correctamente.`);
+      if (editingMovement) {
+        const saved = await api.updateMovement(parseInt(editingMovement.id), {
+          date: newMovData.date,
+          category_id: catId,
+          subcategory_id: subId,
+          description: newMovData.description,
+          type: newMovData.type,
+          amount: newMovData.amount,
+        });
+        setMovements((prev) => prev.map((m) => (m.id === editingMovement.id ? normalizeMovement(saved) : m)));
+        showToast(`✓ ${newMovData.type === 'ingreso' ? 'Ingreso' : 'Gasto'} actualizado correctamente.`);
+      } else {
+        const saved = await api.createMovement({
+          date: newMovData.date,
+          category_id: catId,
+          subcategory_id: subId,
+          description: newMovData.description,
+          type: newMovData.type,
+          amount: newMovData.amount,
+        });
+        setMovements((prev) => [normalizeMovement(saved), ...prev]);
+        showToast(`✓ ${newMovData.type === 'ingreso' ? 'Ingreso' : 'Gasto'} registrado correctamente.`);
+      }
+      setEditingMovement(null);
       setIsEntryModalOpen(false);
     } catch {
       showToast('Error al guardar el movimiento');
@@ -173,11 +197,13 @@ export default function App() {
       try {
         const res = await fetch('/conta/api/import.php', { method: 'POST', body: formData });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok && data.success) {
           showToast(`✓ ${data.message}`);
           setRefreshKey((k) => k + 1);
+        } else if (data.invalid_records && data.invalid_records.length > 0) {
+          setImportErrors(data.invalid_records);
         } else {
-          showToast(data.error || 'Error al importar');
+          showToast(data.error || data.message || 'Error al importar');
         }
       } catch {
         showToast('Error de conexión al importar');
@@ -229,7 +255,7 @@ export default function App() {
           <InicioView movements={movements} preferences={preferences} onOpenAddModal={handleOpenAddEntryModal} onGoToRegistro={() => setActiveTab('registro')} />
         )}
         {activeTab === 'registro' && (
-          <RegistroView movements={movements} categories={categories} preferences={preferences} onOpenAddModal={() => handleOpenAddEntryModal('gasto')} onDeleteMovement={handleDeleteMovement} onExportPDF={() => handleExportData('pdf')} />
+          <RegistroView movements={movements} categories={categories} preferences={preferences} onOpenAddModal={() => handleOpenAddEntryModal('gasto')} onEditMovement={handleOpenEditEntryModal} onDeleteMovement={handleDeleteMovement} />
         )}
         {activeTab === 'ajustes' && (
           <AjustesView categories={categories} preferences={preferences} username={username} onUpdatePreferences={(updated) => {
@@ -246,9 +272,10 @@ export default function App() {
         )}
       </main>
 
-      <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} onClose={() => setIsEntryModalOpen(false)} onSave={handleSaveMovement} />
+      <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
       <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} onClose={() => setIsCategoryModalOpen(false)} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+      <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />
       <ChangePasswordModal isOpen={isPasswordModalOpen} username={username} onClose={() => setIsPasswordModalOpen(false)} showToast={showToast} />
     </div>
   );
