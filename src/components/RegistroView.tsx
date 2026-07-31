@@ -6,7 +6,6 @@ interface RegistroViewProps {
   movements: Movement[];
   categories: Category[];
   preferences: UserPreferences;
-  onOpenAddModal: () => void;
   onEditMovement: (movement: Movement) => void;
   onDeleteMovement: (id: string) => void;
 }
@@ -15,7 +14,6 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   movements,
   categories,
   preferences,
-  onOpenAddModal,
   onEditMovement,
   onDeleteMovement,
 }) => {
@@ -152,211 +150,211 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
-      <section className="px-4 md:px-margin-desktop py-stack-lg bg-surface-container-low border-b-2 border-outline-variant">
-        <div className="max-w-[1100px] mx-auto flex flex-col gap-stack-md">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm md:text-base text-on-surface-variant uppercase tracking-widest">
-                Vista Histórica
+      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 md:pt-3 pb-0">
+        <div className="max-w-[1100px] mx-auto flex flex-col gap-2">
+          {/* Line 1: Reset + Year Selector Tabs */}
+          <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={handleResetFilters}
+              title="Restablecer filtros"
+              className="w-10 h-10 shrink-0 flex items-center justify-center text-error hover:bg-error-container rounded-lg transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[20px]">restart_alt</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedYear(0)}
+              className={`h-10 px-4 font-bold text-sm rounded-lg border-2 transition-all cursor-pointer whitespace-nowrap ${
+                selectedYear === 0
+                  ? 'bg-primary text-on-primary border-primary shadow-sm'
+                  : 'bg-white text-on-surface border-outline-variant hover:border-primary'
+              }`}
+            >
+              Todos los años
+            </button>
+            {availableYears.map((year) => (
+              <button
+                key={year}
+                onClick={() => {
+                  setSelectedYear(year);
+                }}
+                className={`h-10 px-4 font-bold text-sm rounded-lg border-2 transition-all cursor-pointer whitespace-nowrap ${
+                  selectedYear === year
+                    ? 'bg-primary text-on-primary border-primary shadow-sm'
+                    : 'bg-white text-on-surface border-outline-variant hover:border-primary'
+                }`}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+
+          {/* Line 2: Filter Controls + Search Bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Month Selector */}
+            <div className="flex items-center bg-white border-2 border-outline-variant rounded-lg h-10 px-2.5 gap-1.5 shrink-0">
+              <span className="material-symbols-outlined text-on-surface-variant text-[18px]">filter_alt</span>
+              <select
+                value={selectedMonth}
+                onChange={(e) => {
+                  setSelectedMonth(e.target.value);
+                }}
+                className="bg-transparent font-medium text-sm outline-none cursor-pointer pr-1"
+              >
+                <option value="todos">Todos los meses</option>
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
+                <option value="05">Mayo</option>
+                <option value="06">Junio</option>
+                <option value="07">Julio</option>
+                <option value="08">Agosto</option>
+                <option value="09">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedSubcategory('todas');
+              }}
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[140px] cursor-pointer"
+            >
+              <option value="todas">Categoría (Todas)</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Subcategory Filter */}
+            <select
+              value={selectedSubcategory}
+              onChange={(e) => {
+                setSelectedSubcategory(e.target.value);
+              }}
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[140px] cursor-pointer"
+            >
+              <option value="todas">Subcategoría (Todas)</option>
+              {availableSubcategories.map((sub) => (
+                <option key={sub.id} value={sub.name}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Search Bar — takes remaining space */}
+            <div className="relative flex-1 min-w-[220px]">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                search
               </span>
-              <h2 className="font-bold text-3xl md:text-4xl text-primary">
-                Registro de Movimientos
-              </h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={onOpenAddModal}
-                className="flex items-center gap-2 px-5 h-14 bg-primary text-on-primary font-semibold text-base rounded-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer shadow-sm"
-              >
-                <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                <span>Nuevo Registro</span>
-              </button>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                placeholder="Buscar descripción..."
+                className="w-full h-10 pl-10 pr-4 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none"
+              />
             </div>
           </div>
 
-          {/* Year Selector Tabs & Filters */}
-          <div className="flex flex-col gap-4 sticky top-24 z-40 bg-surface-container-low -mx-4 md:-mx-margin-desktop px-4 md:px-margin-desktop py-4 border-b-2 border-outline-variant">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setSelectedYear(0)}
-                  className={`px-6 h-12 font-bold text-base rounded-lg border-2 transition-all cursor-pointer ${
-                    selectedYear === 0
-                      ? 'bg-primary text-on-primary border-primary shadow-sm'
-                      : 'bg-white text-on-surface border-outline-variant hover:border-primary'
-                  }`}
-                >
-                  Todos los años
-                </button>
-                {availableYears.map((year) => (
-                  <button
-                    key={year}
-                    onClick={() => {
-                      setSelectedYear(year);
-                    }}
-                    className={`px-8 h-12 font-bold text-base rounded-lg border-2 transition-all cursor-pointer ${
-                      selectedYear === year
-                        ? 'bg-primary text-on-primary border-primary shadow-sm'
-                        : 'bg-white text-on-surface border-outline-variant hover:border-primary'
-                    }`}
-                  >
-                    {year}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Filter Controls Row */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Month Selector */}
-              <div className="flex items-center bg-white border-2 border-outline-variant rounded-lg h-12 px-3 gap-2">
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">filter_alt</span>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    setSelectedMonth(e.target.value);
-                  }}
-                  className="bg-transparent font-medium text-base outline-none cursor-pointer pr-2"
-                >
-                  <option value="todos">Todos los meses</option>
-                  <option value="01">Enero</option>
-                  <option value="02">Febrero</option>
-                  <option value="03">Marzo</option>
-                  <option value="04">Abril</option>
-                  <option value="05">Mayo</option>
-                  <option value="06">Junio</option>
-                  <option value="07">Julio</option>
-                  <option value="08">Agosto</option>
-                  <option value="09">Septiembre</option>
-                  <option value="10">Octubre</option>
-                  <option value="11">Noviembre</option>
-                  <option value="12">Diciembre</option>
-                </select>
-              </div>
-
-              {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setSelectedSubcategory('todas');
-                }}
-                className="h-12 px-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer"
-              >
-                <option value="todas">Categoría (Todas)</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Subcategory Filter */}
-              <select
-                value={selectedSubcategory}
-                onChange={(e) => {
-                  setSelectedSubcategory(e.target.value);
-                }}
-                className="h-12 px-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer"
-              >
-                <option value="todas">Subcategoría (Todas)</option>
-                {availableSubcategories.map((sub) => (
-                  <option key={sub.id} value={sub.name}>
-                    {sub.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Reset Button */}
-              <button
-                onClick={handleResetFilters}
-                className="flex items-center gap-1.5 px-4 h-12 text-error font-semibold text-base hover:bg-error-container rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <span className="material-symbols-outlined text-[20px]">restart_alt</span>
-                <span>Restablecer</span>
-              </button>
-
-              {/* Search Bar — full width */}
-              <div className="relative w-full">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
-                  search
-                </span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
-                  placeholder="Buscar descripción..."
-                  className="w-full h-12 pl-10 pr-4 bg-white border-2 border-outline-variant font-medium text-base rounded-lg focus:border-primary outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Ledger Table Section */}
-      <section className="px-4 md:px-margin-desktop py-stack-lg">
-        <div className="w-full">
-          <div className="bg-white border-2 border-outline-variant rounded-xl overflow-x-auto shadow-sm">
-            <table className="w-full border-collapse text-left min-w-[800px]">
+          {/* Table Header (inside sticky section) */}
+          <div className="bg-white border-2 border-b-0 border-outline-variant rounded-t-xl overflow-hidden">
+            <table className="w-full border-collapse text-left table-fixed">
+              <colgroup>
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
               <thead>
-                <tr className="bg-surface-container text-on-surface-variant border-b-2 border-outline-variant">
-                  <th className="px-6 py-4 font-semibold text-base w-[130px]">
+                <tr className="bg-primary text-white border-b-2 border-outline-variant">
+                  <th className="px-3 py-3 font-semibold text-sm">
                     <button
                       onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
                       className="w-full flex items-center justify-between gap-1 cursor-pointer group"
                       title={sortOrder === 'desc' ? 'Ordenar fecha: descendente (más reciente)' : 'Ordenar fecha: ascendente (más antigua)'}
                     >
                       <span>Fecha</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 group-hover:opacity-100 transition-opacity text-[18px]">
+                      <span className="material-symbols-outlined text-on-tertiary-container opacity-100 group-hover:opacity-100 transition-opacity text-[18px]">
                         {sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
                       </span>
                     </button>
                   </th>
-                  <th className="px-4 py-4 font-semibold text-base w-[110px]">
+                  <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Categoría</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="px-4 py-4 font-semibold text-base w-[140px]">
+                  <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Subcategoría</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold text-base">
+                  <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Descripción</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold text-base text-right w-[130px]">
+                  <th className="px-3 py-3 font-semibold text-sm text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span>Debe</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold text-base text-right w-[130px]">
+                  <th className="px-3 py-3 font-semibold text-sm text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span>Haber</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold text-base text-right w-[150px] bg-surface-container-high">
+                  <th className="px-3 py-3 font-semibold text-sm text-right bg-primary">
                     <div className="flex items-center justify-end gap-1">
                       <span>Saldo</span>
                       <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
-                  <th className="w-24 py-4 text-right pr-4">
-                    <span className="text-on-surface-variant font-semibold text-base">Acciones</span>
+                  <th className="px-3 py-3 text-right">
+                    <span className="text-on-outline font-semibold text-sm">Acciones</span>
                   </th>
                 </tr>
               </thead>
+            </table>
+          </div>
+        </div>
+      </section>
 
+      {/* Ledger Table Section */}
+      <section className="px-4 md:px-margin-desktop pt-1 pb-stack-lg">
+        <div className="max-w-[1100px] mx-auto w-full">
+          <div className="bg-white border-2 border-t-0 border-outline-variant rounded-b-xl overflow-x-auto shadow-sm">
+            <table className="w-full border-collapse text-left table-fixed">
+              <colgroup>
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
               <tbody className="divide-y-2 divide-outline-variant">
                 {tableRows.length === 0 ? (
                   <tr>
@@ -379,13 +377,13 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                             : 'hover:bg-surface-container-low text-on-surface'
                         }`}
                       >
-                        <td className="px-6 py-2 font-normal text-base whitespace-nowrap">
+                        <td className="px-3 py-2 font-normal text-sm whitespace-nowrap">
                           {mov.date.includes('-')
                             ? mov.date.split('-').reverse().join('/')
                             : mov.date}
                         </td>
 
-                        <td className="px-4 py-2 font-semibold text-sm">
+                        <td className="px-3 py-2 font-semibold text-sm">
                           <span className={`px-2 py-1 rounded ${
                             isSelected
                               ? 'bg-white/20 text-white'
@@ -395,11 +393,11 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           </span>
                         </td>
 
-                        <td className="px-4 py-2 font-medium text-base">
+                        <td className="px-3 py-2 font-medium text-sm">
                           {mov.subcategory}
                         </td>
 
-                        <td className="px-6 py-2 font-medium text-base">
+                        <td className="px-3 py-2 font-medium text-sm">
                           <span
                             onMouseEnter={(e) => {
                               const el = e.currentTarget;
@@ -413,13 +411,13 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                               }
                             }}
                             onMouseLeave={() => setTooltip(null)}
-                            className="block max-w-[420px] truncate"
+                            className="block w-full truncate"
                           >
                             {mov.description}
                           </span>
                         </td>
 
-                        <td className="px-6 py-2 font-bold text-base text-right whitespace-nowrap">
+                        <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
                           {isExpense ? (
                             <span className={isSelected ? 'text-tertiary-fixed-dim' : 'text-error'}>
                               {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
@@ -429,7 +427,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           )}
                         </td>
 
-                        <td className="px-6 py-2 font-bold text-base text-right whitespace-nowrap">
+                        <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
                           {!isExpense ? (
                             <span className={isSelected ? 'text-secondary-container' : 'text-secondary'}>
                               {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
@@ -439,7 +437,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           )}
                         </td>
 
-                        <td className={`px-6 py-2 font-bold text-lg text-right whitespace-nowrap ${
+                        <td className={`px-3 py-2 font-bold text-base text-right whitespace-nowrap ${
                           isSelected ? 'bg-primary-container/40 text-white' : 'bg-surface-container-low text-primary'
                         }`}>
                           {mov.balanceAfter !== undefined
@@ -447,7 +445,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                             : '-'}
                         </td>
 
-                        <td className="px-2 py-2 text-right whitespace-nowrap">
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={(e) => {

@@ -46,25 +46,9 @@ export const InicioView: React.FC<InicioViewProps> = ({
   }, [movements]);
 
   const now = new Date();
-  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
   const currentYear = now.getFullYear();
-  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const currentMonthName = monthNames[now.getMonth()];
 
-  const isCurrentMonth = (d: string) => d.startsWith(`${currentYear}-${currentMonth}`);
   const isCurrentYear = (d: string) => d.startsWith(`${currentYear}`);
-
-  const monthlyStats = useMemo(() => {
-    const income = movements
-      .filter((m) => m.type === 'ingreso' && isCurrentMonth(m.date))
-      .reduce((acc, m) => acc + m.amount, 0);
-
-    const expense = movements
-      .filter((m) => m.type === 'gasto' && isCurrentMonth(m.date))
-      .reduce((acc, m) => acc + m.amount, 0);
-
-    return { income, expense };
-  }, [movements]);
 
   const yearlyStats = useMemo(() => {
     const income = movements
@@ -77,11 +61,6 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
     return { income, expense };
   }, [movements]);
-
-  // Income progress percentage (against max target of 2500)
-  const incomePercent = Math.min(100, Math.round((monthlyStats.income / 2500) * 100)) || 85;
-  // Expense progress percentage (against max target of 2000)
-  const expensePercent = Math.min(100, Math.round((monthlyStats.expense / 2000) * 100)) || 40;
 
   const shortMonths = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 
@@ -173,54 +152,6 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
         {/* Subtle Background Blur Decoration */}
         <div className="absolute right-[5%] top-[10%] w-96 h-96 rounded-full bg-primary/5 blur-3xl -z-10 pointer-events-none" />
-      </section>
-
-      {/* Monthly Summary Cards */}
-      <section className="px-4 md:px-margin-desktop py-stack-lg">
-        <div className="flex items-center gap-4 mb-stack-md">
-          <span className="material-symbols-outlined text-primary text-[32px]">calendar_month</span>
-          <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Resumen de {currentMonthName}</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Expense Card */}
-          <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
-                Debe (Gastos)
-              </span>
-              <span className="material-symbols-outlined text-error text-4xl md:text-[48px]">trending_down</span>
-            </div>
-            <span className="font-bold text-4xl md:text-[56px] text-error tabular-nums">
-              - {formatAmount(monthlyStats.expense)}€
-            </span>
-            <div className="w-full bg-surface-container h-6 rounded-full overflow-hidden">
-              <div
-                className="bg-error h-full transition-all duration-1000"
-                style={{ width: `${expensePercent}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Income Card */}
-          <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 flex flex-col gap-6 shadow-sm">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-base text-on-surface-variant uppercase tracking-widest">
-                Haber (Ingresos)
-              </span>
-              <span className="material-symbols-outlined text-secondary text-4xl md:text-[48px]">trending_up</span>
-            </div>
-            <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
-              + {formatAmount(monthlyStats.income)}€
-            </span>
-            <div className="w-full bg-surface-container h-6 rounded-full overflow-hidden">
-              <div
-                className="bg-secondary h-full transition-all duration-1000"
-                style={{ width: `${incomePercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Yearly Summary Cards */}

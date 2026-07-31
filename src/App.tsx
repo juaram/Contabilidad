@@ -255,7 +255,7 @@ export default function App() {
           <InicioView movements={movements} preferences={preferences} onOpenAddModal={handleOpenAddEntryModal} onGoToRegistro={() => setActiveTab('registro')} />
         )}
         {activeTab === 'registro' && (
-          <RegistroView movements={movements} categories={categories} preferences={preferences} onOpenAddModal={() => handleOpenAddEntryModal('gasto')} onEditMovement={handleOpenEditEntryModal} onDeleteMovement={handleDeleteMovement} />
+          <RegistroView movements={movements} categories={categories} preferences={preferences} onEditMovement={handleOpenEditEntryModal} onDeleteMovement={handleDeleteMovement} />
         )}
         {activeTab === 'ajustes' && (
           <AjustesView categories={categories} preferences={preferences} username={username} onUpdatePreferences={(updated) => {
