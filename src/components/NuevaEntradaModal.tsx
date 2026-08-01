@@ -168,34 +168,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
             </button>
           </div>
 
-          {/* Amount */}
-          <div className="space-y-1">
-            <label className="block font-semibold text-base text-on-surface">Importe (€)</label>
-            <input
-              type="text"
-              inputMode="decimal"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0,00"
-              className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-bold text-2xl tabular-nums"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="block font-semibold text-base text-on-surface">Descripción</label>
-            <input
-              type="text"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ej: Compra semanal Mercadona"
-              className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-lg"
-            />
-          </div>
-
-          {/* Date & Category in 2 columns */}
+          {/* Date in 2 columns */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Fecha</label>
@@ -207,7 +180,11 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                 className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
               />
             </div>
+          </div> 
 
+          {/*Category & Subcategory in 2 columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Category */}
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Categoría</label>
               <select
@@ -222,7 +199,6 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                 ))}
               </select>
             </div>
-          </div>
 
           {/* Subcategory */}
           <div className="space-y-1">
@@ -249,6 +225,37 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                 <option value="General">General</option>
               )}
             </select>
+          </div>
+
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1">
+            <label className="block font-semibold text-base text-on-surface">Descripción</label>
+            <input
+              type="text"
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ej: Compra semanal Mercadona"
+              className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-lg"
+            />
+          </div>
+
+          {/* Amount */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="block font-semibold text-base text-on-surface">Importe (€)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0,00"
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-bold text-2xl tabular-nums"
+              />
+            </div>
           </div>
 
           {/* Actions */}
