@@ -12,6 +12,8 @@ interface AjustesViewProps {
   onExportData: (type: 'pdf' | 'excel') => void;
   onImportData: () => void;
   onBackupData: () => void;
+  onRestoreData: () => void;
+  onManageUsers: () => void;
   onOpenHelpModal: () => void;
   onChangePassword: () => void;
 }
@@ -27,10 +29,14 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onExportData,
   onImportData,
   onBackupData,
+  onRestoreData,
+  onManageUsers,
   onOpenHelpModal,
   onChangePassword,
 }) => {
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>(['cat-hogar', 'cat-alimentacion']);
+  const [openPrefs, setOpenPrefs] = useState(false);
+  const [openSecurity, setOpenSecurity] = useState(false);
   const [localTitle, setLocalTitle] = useState(preferences.appTitle);
   const [localSubtitle, setLocalSubtitle] = useState(preferences.appSubtitle);
   const [dirty, setDirty] = useState(false);
@@ -155,14 +161,25 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
           <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
             {/* General Preferences */}
             <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant">
+              <button
+                onClick={() => setOpenPrefs((prev) => !prev)}
+                className="w-full bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between hover:bg-surface-container-highest transition-colors cursor-pointer text-left"
+              >
                 <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">settings</span>
                   <span>Preferencias Generales</span>
                 </h3>
-              </div>
+                <span
+                  className={`material-symbols-outlined text-primary text-[32px] transition-transform duration-300 ${
+                    openPrefs ? 'rotate-180' : ''
+                  }`}
+                >
+                  expand_more
+                </span>
+              </button>
 
-              <div className="p-4 md:p-stack-md flex flex-col gap-6">
+              {openPrefs && (
+                <div className="p-4 md:p-stack-md flex flex-col gap-6">
                 {/* Currency */}
                 <div className="flex flex-col gap-2">
                   <label className="font-semibold text-base text-on-surface-variant">Moneda principal</label>
@@ -241,19 +258,42 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     Guardar cambios
                   </button>
                 )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Security & Data */}
             <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant">
+              <button
+                onClick={() => setOpenSecurity((prev) => !prev)}
+                className="w-full bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between hover:bg-surface-container-highest transition-colors cursor-pointer text-left"
+              >
                 <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">database</span>
                   <span>Seguridad y Datos</span>
                 </h3>
-              </div>
+                <span
+                  className={`material-symbols-outlined text-primary text-[32px] transition-transform duration-300 ${
+                    openSecurity ? 'rotate-180' : ''
+                  }`}
+                >
+                  expand_more
+                </span>
+              </button>
 
-              <div className="p-4 md:p-stack-md grid grid-cols-1 gap-4">
+              {openSecurity && (
+                <div className="p-4 md:p-stack-md grid grid-cols-1 gap-4">
+                <button
+                  onClick={onManageUsers}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">manage_accounts</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Gestión de Usuarios</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Crear, editar y eliminar usuarios</span>
+                  </div>
+                </button>
+
                 <button
                   onClick={onChangePassword}
                   className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
@@ -297,7 +337,19 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     <span className="font-medium text-sm text-on-surface-variant">Guardar estado actual</span>
                   </div>
                 </button>
-              </div>
+
+                <button
+                  onClick={onRestoreData}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">settings_backup_restore</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Restaurar Copia de Seguridad</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Recuperar estado desde un archivo</span>
+                  </div>
+                </button>
+                </div>
+              )}
             </div>
 
             {/* App Info & Help */}

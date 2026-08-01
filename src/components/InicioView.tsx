@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Movement, UserPreferences } from '../types';
 
 interface InicioViewProps {
@@ -37,30 +37,64 @@ export const InicioView: React.FC<InicioViewProps> = ({
   };
 
   const [chartTooltip, setChartTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [atTop, setAtTop] = useState(true);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setAtTop(window.scrollY <= 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // First year with data (exception for the opening 'Ingreso'/'Anterior' entry)
+  const firstYear = useMemo(() => {
+    const years = movements
+      .map((m) => new Date(m.date).getFullYear())
+      .filter((y) => !isNaN(y));
+    return years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+  }, [movements]);
 
   // Compute Current Total Balance
   const totalBalance = useMemo(() => {
     return movements.reduce((acc, m) => {
+      const date = new Date(m.date);
+      const isAnteriorOpening =
+        m.type === 'ingreso' &&
+        m.category.toLowerCase() === 'ingreso' &&
+        m.subcategory.toLowerCase() === 'anterior' &&
+        date.getMonth() === 0 &&
+        date.getDate() === 1;
+      if (isAnteriorOpening && date.getFullYear() !== firstYear) return acc;
       return m.type === 'ingreso' ? acc + m.amount : acc - m.amount;
     }, 0);
-  }, [movements]);
+  }, [movements, firstYear]);
 
   const now = new Date();
   const currentYear = now.getFullYear();
 
-  const isCurrentYear = (d: string) => d.startsWith(`${currentYear}`);
+  const availableYears = useMemo(() => {
+    const years = new Set<number>(
+      movements
+        .map((m) => new Date(m.date).getFullYear())
+        .filter((y) => !isNaN(y))
+    );
+    years.add(currentYear);
+    return [...years].sort((a, b) => b - a);
+  }, [movements, currentYear]);
 
   const yearlyStats = useMemo(() => {
     const income = movements
-      .filter((m) => m.type === 'ingreso' && isCurrentYear(m.date))
+      .filter((m) => m.type === 'ingreso' && m.date.startsWith(`${selectedYear}-`))
       .reduce((acc, m) => acc + m.amount, 0);
 
     const expense = movements
-      .filter((m) => m.type === 'gasto' && isCurrentYear(m.date))
+      .filter((m) => m.type === 'gasto' && m.date.startsWith(`${selectedYear}-`))
       .reduce((acc, m) => acc + m.amount, 0);
 
     return { income, expense };
-  }, [movements]);
+  }, [movements, selectedYear]);
 
   const shortMonths = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 
@@ -68,14 +102,14 @@ export const InicioView: React.FC<InicioViewProps> = ({
     return Array.from({ length: 12 }, (_, i) => {
       const mm = String(i + 1).padStart(2, '0');
       const income = movements
-        .filter((mov) => mov.type === 'ingreso' && mov.date.startsWith(`${currentYear}-${mm}`))
+        .filter((mov) => mov.type === 'ingreso' && mov.date.startsWith(`${selectedYear}-${mm}`))
         .reduce((acc, mov) => acc + mov.amount, 0);
       const expense = movements
-        .filter((mov) => mov.type === 'gasto' && mov.date.startsWith(`${currentYear}-${mm}`))
+        .filter((mov) => mov.type === 'gasto' && mov.date.startsWith(`${selectedYear}-${mm}`))
         .reduce((acc, mov) => acc + mov.amount, 0);
       return { month: i, income, expense };
     });
-  }, [movements]);
+  }, [movements, selectedYear]);
 
   const maxAmount = Math.max(...monthlyHistory.flatMap((m) => [m.income, m.expense]), 1);
 
@@ -158,7 +192,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
       <section className="px-4 md:px-margin-desktop py-stack-lg">
         <div className="flex items-center gap-4 mb-stack-md">
           <span className="material-symbols-outlined text-primary text-[32px]">calendar_month</span>
-          <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Resumen del Año {currentYear}</h3>
+          <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Resumen del Año {selectedYear}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -189,30 +223,43 @@ export const InicioView: React.FC<InicioViewProps> = ({
       </section>
 
       {/* History Visualization Section */}
-      <section className="px-4 md:px-margin-desktop py-stack-lg bg-surface-container-low border-t border-b border-outline-variant">
+      <section className="px-4 md:px-margin-desktop py-stack-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-stack-lg gap-4">
           <div>
-            <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Histórico de {currentYear}</h3>
+            <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Histórico de {selectedYear}</h3>
             <p className="text-base md:text-lg text-on-surface-variant">
               Ingresos y gastos mensuales del año
             </p>
           </div>
-          <button
-            onClick={onGoToRegistro}
-            className="flex items-center gap-3 px-6 md:px-8 h-14 bg-primary text-on-primary rounded-full font-semibold text-base md:text-lg hover:bg-primary-container transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined">analytics</span>
-            Ver detalles del informe
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="h-14 px-4 bg-white border-2 border-outline-variant font-semibold text-base rounded-full focus:border-primary outline-none cursor-pointer"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  Año {year}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={onGoToRegistro}
+              className="flex items-center justify-center gap-3 px-6 md:px-8 h-14 bg-primary text-on-primary rounded-full font-semibold text-base md:text-lg hover:bg-primary-container transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined">analytics</span>
+              Ver detalles del informe
+            </button>
+          </div>
         </div>
 
         {/* Bar Chart Visualization */}
-        <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10">
+        <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 shadow-sm overflow-hidden">
           <div className="flex items-end justify-between h-72 md:h-80 gap-1 md:gap-2">
             {monthlyHistory.map((item) => {
               const incomeH = maxAmount > 0 ? (item.income / maxAmount) * 100 : 0;
               const expenseH = maxAmount > 0 ? (item.expense / maxAmount) * 100 : 0;
-              const isCurrent = item.month === now.getMonth();
+              const isCurrent = selectedYear === now.getFullYear() && item.month === now.getMonth();
               return (
                 <div key={item.month} className="flex-1 h-full flex flex-col items-center gap-2 group min-w-0">
                   <div className="w-full flex-1 flex flex-col justify-end gap-0.5">
@@ -340,6 +387,21 @@ export const InicioView: React.FC<InicioViewProps> = ({
           {chartTooltip.text}
         </div>
       )}
+
+      {/* Scroll to top / bottom button */}
+      <button
+        onClick={() =>
+          atTop
+            ? window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+            : window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        title={atTop ? 'Ir al final de la página' : 'Ir al principio de la página'}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[28px]">
+          {atTop ? 'arrow_downward' : 'arrow_upward'}
+        </span>
+      </button>
     </div>
   );
 };

@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Category, Movement, UserPreferences } from '../types';
 import { ConfirmarEliminarModal } from './ConfirmarEliminarModal';
 
+const formatAmount = (value: number): string => {
+  const fixed = Math.abs(value).toFixed(2);
+  const [int, dec] = fixed.split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${value < 0 ? '-' : ''}${grouped},${dec}`;
+};
+
 interface RegistroViewProps {
   movements: Movement[];
   categories: Category[];
@@ -35,12 +42,12 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
+      setAtTop(window.scrollY <= 400);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -64,11 +71,19 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
   // Available subcategories: from the selected category, or all categories if none selected
   const availableSubcategories = useMemo(() => {
-    if (selectedCategory === 'todas') {
-      return categories.flatMap((c) => c.subcategories);
-    }
-    const cat = categories.find((c) => c.id === selectedCategory || c.name === selectedCategory);
-    return cat ? cat.subcategories : [];
+    const subs =
+      selectedCategory === 'todas'
+        ? categories.flatMap((c) => c.subcategories)
+        : categories.find((c) => c.id === selectedCategory || c.name === selectedCategory)?.subcategories ?? [];
+
+    const seen = new Set<string>();
+    const unique = subs.filter((s) => {
+      const key = s.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return unique.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }, [categories, selectedCategory]);
 
   // Filtered movements
@@ -297,37 +312,31 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Categoría</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Subcategoría</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 font-semibold text-sm">
                     <div className="flex items-center justify-between gap-1">
                       <span>Descripción</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 font-semibold text-sm text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span>Debe</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 font-semibold text-sm text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span>Haber</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 font-semibold text-sm text-right bg-primary">
                     <div className="flex items-center justify-end gap-1">
                       <span>Saldo</span>
-                      <span className="material-symbols-outlined text-on-surface-variant opacity-50 text-[18px]">unfold_more</span>
                     </div>
                   </th>
                   <th className="px-3 py-3 text-right">
@@ -420,7 +429,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                         <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
                           {isExpense ? (
                             <span className={isSelected ? 'text-tertiary-fixed-dim' : 'text-error'}>
-                              {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
+                              {formatAmount(mov.amount)} {currencySymbol}
                             </span>
                           ) : (
                             <span className="opacity-40">-</span>
@@ -430,7 +439,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                         <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
                           {!isExpense ? (
                             <span className={isSelected ? 'text-secondary-container' : 'text-secondary'}>
-                              {mov.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
+                              {formatAmount(mov.amount)} {currencySymbol}
                             </span>
                           ) : (
                             <span className="opacity-40">-</span>
@@ -441,7 +450,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           isSelected ? 'bg-primary-container/40 text-white' : 'bg-surface-container-low text-primary'
                         }`}>
                           {mov.balanceAfter !== undefined
-                            ? `${mov.balanceAfter.toLocaleString('es-ES', { minimumFractionDigits: 2 })} ${currencySymbol}`
+                            ? `${formatAmount(mov.balanceAfter)} ${currencySymbol}`
                             : '-'}
                         </td>
 
@@ -480,14 +489,14 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   <td colSpan={4} className="px-6 py-5 font-bold text-base md:text-lg text-right uppercase">
                     TOTAL ACUMULADO PERIODO:
                   </td>
-                  <td className="px-6 py-5 font-extrabold text-xl md:text-2xl text-right text-tertiary-fixed whitespace-nowrap">
-                    {totalExpense.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
+                  <td className="px-6 py-5 font-extrabold text-sm md:text-base text-right text-tertiary-fixed whitespace-nowrap">
+                    {formatAmount(totalExpense)} {currencySymbol}
                   </td>
-                  <td className="px-6 py-5 font-extrabold text-xl md:text-2xl text-right text-secondary-fixed whitespace-nowrap">
-                    {totalIncome.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
+                  <td className="px-6 py-5 font-extrabold text-sm md:text-base text-right text-secondary-fixed whitespace-nowrap">
+                    {formatAmount(totalIncome)} {currencySymbol}
                   </td>
                   <td className="px-6 py-5 font-black text-2xl md:text-3xl text-right bg-primary-container text-white whitespace-nowrap" colSpan={2}>
-                    {finalBalance.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {currencySymbol}
+                    {formatAmount(finalBalance)} {currencySymbol}
                   </td>
                 </tr>
               </tfoot>
@@ -564,16 +573,20 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
         </div>
       )}
 
-      {/* Scroll to top button */}
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          title="Ir hacia arriba"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[28px]">arrow_upward</span>
-        </button>
-      )}
+      {/* Scroll to top / bottom button */}
+      <button
+        onClick={() =>
+          atTop
+            ? window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+            : window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        title={atTop ? 'Ir al final de la página' : 'Ir al principio de la página'}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[28px]">
+          {atTop ? 'arrow_downward' : 'arrow_upward'}
+        </span>
+      </button>
 
       {/* Delete confirmation modal */}
       <ConfirmarEliminarModal

@@ -153,3 +153,31 @@ export async function changePassword(username: string, currentPassword: string, 
     body: JSON.stringify({ username, current_password: currentPassword, new_password: newPassword }),
   });
 }
+
+export interface User {
+  id: string;
+  username: string;
+  created_at?: string;
+}
+
+export async function fetchUsers(): Promise<User[]> {
+  return request<User[]>('users.php');
+}
+
+export async function createUser(username: string, password: string): Promise<{ message: string; id: number; username: string }> {
+  return request('users.php', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export async function updateUser(id: number, username: string, password?: string): Promise<{ message: string }> {
+  return request('users.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, username, password }),
+  });
+}
+
+export async function deleteUser(id: number): Promise<{ message: string }> {
+  return request(`users.php?_method=DELETE&id=${id}`, { method: 'POST' });
+}

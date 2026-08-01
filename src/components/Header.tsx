@@ -6,9 +6,10 @@ interface HeaderProps {
   onOpenNewEntry: () => void;
   appTitle: string;
   appSubtitle: string;
+  username: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenNewEntry, appTitle, appSubtitle }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenNewEntry, appTitle, appSubtitle, username }) => {
   return (
     <header className="fixed top-0 left-0 right-0 h-24 bg-surface border-b-2 border-outline-variant z-50 px-4 md:px-margin-desktop flex items-center justify-between backdrop-blur-md">
       <div className="flex items-center gap-6 lg:gap-12">
@@ -86,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenN
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col items-end">
             <span className="font-semibold text-base text-on-surface leading-tight">Usuario</span>
-            <span className="text-sm font-medium text-on-surface-variant leading-tight">Admin</span>
+            <span className="text-sm font-medium text-on-surface-variant leading-tight">{username}</span>
           </div>
           <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center border-2 border-primary shadow-sm">
             <span className="material-symbols-outlined text-on-primary text-[24px]">person</span>

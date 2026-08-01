@@ -8,6 +8,7 @@ import { NuevaEntradaModal } from './components/NuevaEntradaModal';
 import { NuevaCategoriaModal } from './components/NuevaCategoriaModal';
 import { HelpModal } from './components/HelpModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { UsersManagementModal } from './components/UsersManagementModal';
 import { ImportacionErroresModal, InvalidRecord } from './components/ImportacionErroresModal';
 import { Category, Movement, MovementType, UserPreferences } from './types';
 import * as api from './api';
@@ -35,6 +36,7 @@ export default function App() {
   const [parentCategoryForSub, setParentCategoryForSub] = useState<string>('');
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [importErrors, setImportErrors] = useState<InvalidRecord[]>([]);
@@ -224,6 +226,38 @@ export default function App() {
     showToast('✓ Copia de seguridad guardada.');
   };
 
+  const handleRestoreData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const backup = JSON.parse(await file.text());
+        const res = await fetch('/conta/api/restore.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            categories: backup.categories,
+            movements: backup.movements,
+            preferences: backup.preferences,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.message) {
+          showToast(`✓ ${data.message}`);
+          setRefreshKey((k) => k + 1);
+        } else {
+          showToast(data.error || 'Error al restaurar la copia de seguridad');
+        }
+      } catch {
+        showToast('El archivo de copia de seguridad no es válido');
+      }
+    };
+    input.click();
+  };
+
   if (!isAuthenticated) {
     return <LoginView onLogin={(u) => { setUsername(u); setIsAuthenticated(true); }} />;
   }
@@ -248,7 +282,7 @@ export default function App() {
         </div>
       )}
 
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} onOpenNewEntry={() => handleOpenAddEntryModal('gasto')} appTitle={preferences.appTitle} appSubtitle={preferences.appSubtitle} />
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} onOpenNewEntry={() => handleOpenAddEntryModal('gasto')} appTitle={preferences.appTitle} appSubtitle={preferences.appSubtitle} username={username} />
 
       <main className="pt-24 min-h-screen bg-surface-container-lowest">
         {activeTab === 'inicio' && (
@@ -268,7 +302,7 @@ export default function App() {
               app_title: newPrefs.appTitle,
               app_subtitle: newPrefs.appSubtitle,
             }).catch(() => showToast('Error al guardar preferencias'));
-          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} />
+          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} />
         )}
       </main>
 
@@ -277,6 +311,7 @@ export default function App() {
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
       <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />
       <ChangePasswordModal isOpen={isPasswordModalOpen} username={username} onClose={() => setIsPasswordModalOpen(false)} showToast={showToast} />
+      <UsersManagementModal isOpen={isUsersModalOpen} currentUsername={username} onClose={() => setIsUsersModalOpen(false)} showToast={showToast} />
     </div>
   );
 }
