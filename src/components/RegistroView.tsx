@@ -149,6 +149,13 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     });
   }, [movements, selectedYear, selectedMonth, selectedCategory, selectedSubcategory, searchQuery]);
 
+  // Category lookup by id to reuse each category's configured colors
+  const categoryById = useMemo(() => {
+    const map = new Map<string, Category>();
+    categories.forEach((c) => map.set(c.id, c));
+    return map;
+  }, [categories]);
+
   // Calculate Running Balance and Totals
   const { tableRows, totalExpense, totalIncome, finalBalance } = useMemo(() => {
     let running = 0;
@@ -412,13 +419,20 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                         </td>
 
                         <td className="px-3 py-2 font-semibold text-sm">
-                          <span className={`px-2 py-1 rounded ${
-                            isSelected
-                              ? 'bg-white/20 text-white'
-                              : 'bg-surface-container-high text-on-surface-variant'
-                          }`}>
-                            {mov.category}
-                          </span>
+                          {(() => {
+                            const movCat = categoryById.get(mov.category_id);
+                            return (
+                              <span className={`px-2 py-1 rounded ${
+                                isSelected
+                                  ? 'bg-white/20 text-white'
+                                  : movCat
+                                    ? `${movCat.colorBgClass} ${movCat.colorTextClass}`
+                                    : 'bg-surface-container-high text-on-surface-variant'
+                              }`}>
+                                {mov.category}
+                              </span>
+                            );
+                          })()}
                         </td>
 
                         <td className="px-3 py-2 font-medium text-sm">

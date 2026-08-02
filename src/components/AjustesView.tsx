@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Category, UserPreferences } from '../types';
+import { CategoryIcon } from './CategoryIcon';
 
 interface AjustesViewProps {
   categories: Category[];
@@ -7,6 +8,7 @@ interface AjustesViewProps {
   username: string;
   onUpdatePreferences: (updated: Partial<UserPreferences>) => void;
   onOpenAddCategoryModal: () => void;
+  onOpenEditCategoryModal: (category: Category) => void;
   onOpenAddSubcategoryModal: (categoryName: string) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
   onExportData: (type: 'pdf' | 'excel') => void;
@@ -24,6 +26,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   username,
   onUpdatePreferences,
   onOpenAddCategoryModal,
+  onOpenEditCategoryModal,
   onOpenAddSubcategoryModal,
   onDeleteSubcategory,
   onExportData,
@@ -90,13 +93,13 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
 
                   return (
                     <div key={cat.id} className="group">
-                      <button
-                        onClick={() => toggleCategoryExpand(cat.id)}
-                        className="w-full flex items-center justify-between p-4 md:p-stack-md hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                      >
-                        <div className="flex items-center gap-4 md:gap-6">
+                      <div className="w-full flex items-center justify-between p-4 md:p-stack-md hover:bg-surface-container-low transition-colors">
+                        <button
+                          onClick={() => toggleCategoryExpand(cat.id)}
+                          className="flex items-center gap-4 md:gap-6 text-left flex-1 cursor-pointer"
+                        >
                           <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full ${cat.colorBgClass} ${cat.colorTextClass} flex items-center justify-center shrink-0`}>
-                            <span className="material-symbols-outlined text-[28px] md:text-[32px]">{cat.icon}</span>
+                            <CategoryIcon icon={cat.icon} className="text-[28px] md:text-[32px]" imgClassName="w-7 h-7 md:w-8 md:h-8" />
                           </div>
                           <div>
                             <span className="font-bold text-xl md:text-2xl text-on-surface">
@@ -106,15 +109,30 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                               {cat.subcategories.length} subcategorías activas
                             </p>
                           </div>
+                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => onOpenEditCategoryModal(cat)}
+                            title="Editar categoría"
+                            className="p-2 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[24px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => toggleCategoryExpand(cat.id)}
+                            title={isExpanded ? 'Contraer categoría' : 'Desplegar categoría'}
+                            className="p-1 rounded-full text-primary hover:bg-surface-container-high transition-colors cursor-pointer"
+                          >
+                            <span
+                              className={`material-symbols-outlined text-[32px] transition-transform duration-300 ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            >
+                              expand_more
+                            </span>
+                          </button>
                         </div>
-                        <span
-                          className={`material-symbols-outlined text-primary text-[32px] transition-transform duration-300 ${
-                            isExpanded ? 'rotate-180' : ''
-                          }`}
-                        >
-                          expand_more
-                        </span>
-                      </button>
+                      </div>
 
                       {/* Expanded Subcategory List */}
                       {isExpanded && (

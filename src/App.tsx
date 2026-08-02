@@ -36,6 +36,7 @@ export default function App() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalMode, setCategoryModalMode] = useState<'category' | 'subcategory'>('category');
   const [parentCategoryForSub, setParentCategoryForSub] = useState<string>('');
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
@@ -128,6 +129,13 @@ export default function App() {
 
   const handleOpenAddCategoryModal = () => {
     setCategoryModalMode('category');
+    setEditingCategory(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleOpenEditCategoryModal = (category: Category) => {
+    setCategoryModalMode('category');
+    setEditingCategory(category);
     setIsCategoryModalOpen(true);
   };
 
@@ -137,13 +145,31 @@ export default function App() {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = async (name: string, icon: string) => {
+  const handleSaveCategory = async (name: string, icon: string, colorBgClass: string, colorTextClass: string) => {
     try {
-      const saved = await api.createCategory(name, icon);
-      setCategories((prev) => [...prev, normalizeCategory(saved)]);
-      showToast(`✓ Categoría "${name}" creada.`);
+      if (editingCategory) {
+        const saved = await api.updateCategory(parseInt(editingCategory.id), {
+          name,
+          icon,
+          color_bg: colorBgClass,
+          color_text: colorTextClass,
+        });
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === editingCategory.id
+              ? { ...normalizeCategory(saved), subcategories: c.subcategories }
+              : c
+          )
+        );
+        showToast(`✓ Categoría "${name}" actualizada.`);
+      } else {
+        const saved = await api.createCategory(name, icon, colorBgClass, colorTextClass);
+        setCategories((prev) => [...prev, normalizeCategory(saved)]);
+        showToast(`✓ Categoría "${name}" creada.`);
+      }
+      setEditingCategory(null);
     } catch {
-      showToast('Error al crear la categoría');
+      showToast('Error al guardar la categoría');
     }
   };
 
@@ -351,12 +377,12 @@ export default function App() {
               app_title: newPrefs.appTitle,
               app_subtitle: newPrefs.appSubtitle,
             }).catch(() => showToast('Error al guardar preferencias'));
-          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} />
+          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} />
         )}
       </main>
 
       <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
-      <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} onClose={() => setIsCategoryModalOpen(false)} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
+      <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} editingCategory={editingCategory} onClose={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
       <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />
       <ChangePasswordModal isOpen={isPasswordModalOpen} username={username} onClose={() => setIsPasswordModalOpen(false)} showToast={showToast} />

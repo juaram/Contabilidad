@@ -36,7 +36,7 @@ Todas las tablas usan el prefijo `conta_`.
 |---|---|---|
 | `id` | INT UNSIGNED AUTO_INCREMENT PK | Identificador único |
 | `name` | VARCHAR(100) NOT NULL | Nombre visible |
-| `icon` | VARCHAR(50) NOT NULL | Icono Material Symbols |
+| `icon` | VARCHAR(255) NOT NULL | Icono: enlace CDN (freeicon.com) o nombre Material Symbols |
 | `color_bg` | VARCHAR(50) DEFAULT 'bg-primary-fixed' | Clase Tailwind fondo |
 | `color_text` | VARCHAR(50) DEFAULT 'text-on-primary-fixed' | Clase Tailwind texto |
 | `created_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP | Fecha de creación |
@@ -84,7 +84,8 @@ Todas las tablas usan el prefijo `conta_`.
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/conta/api/categories.php` | Listar categorías con subcategorías y contador |
-| POST | `/conta/api/categories.php` | Crear categoría `{name, icon}` |
+| POST | `/conta/api/categories.php` | Crear categoría `{name, icon, color_bg, color_text}` |
+| POST | `/conta/api/categories.php?_method=PUT` | Editar categoría `{id, name, icon, color_bg, color_text}` |
 | DELETE | `/conta/api/categories.php?id=X` | Eliminar (solo si no tiene movimientos) |
 | POST | `/conta/api/subcategories.php` | Crear subcategoría `{category_id, name}` |
 | DELETE | `/conta/api/subcategories.php?id=X` | Eliminar subcategoría |
@@ -171,7 +172,7 @@ Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campo
 | Registrar ingreso/gasto con categorías | ✅ API movements |
 | Tabla histórica con filtros y paginación | ✅ API movements |
 | Saldo acumulado dinámico | ✅ Calculado en frontend |
-| Gestión de categorías y subcategorías (sin código) | ✅ API categories |
+| Gestión de categorías y subcategorías (sin código) | ✅ API categories (crear/editar nombre, icono y color) |
 | Preferencias (moneda, fecha, contraste, título, subtítulo) | ✅ API preferences (POST) |
 | Exportar CSV (UTF-8 BOM, separador `;`) | ✅ API export |
 | Importar CSV (UTF-8 BOM, separador `;`) | ✅ API import |

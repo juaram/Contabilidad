@@ -4,12 +4,19 @@ require_once __DIR__ . '/config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+if ($method === 'POST' && isset($_GET['_method'])) {
+    $method = strtoupper($_GET['_method']);
+}
+
 switch ($method) {
     case 'GET':
         getCategories();
         break;
     case 'POST':
         createCategory();
+        break;
+    case 'PUT':
+        updateCategory();
         break;
     case 'DELETE':
         deleteCategory();
@@ -21,6 +28,8 @@ switch ($method) {
 function getCategories(): void
 {
     global $pdo;
+
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "categories MODIFY icon VARCHAR(255) NOT NULL DEFAULT 'category'"); } catch (PDOException $e) { }
 
     $stmt = $pdo->query("
         SELECT c.*, 
@@ -59,16 +68,23 @@ function createCategory(): void
     $input = getInput();
     $name = trim($input['name'] ?? '');
     $icon = trim($input['icon'] ?? 'category');
+    $colorBg = trim($input['color_bg'] ?? 'bg-primary-fixed');
+    $colorText = trim($input['color_text'] ?? 'text-on-primary-fixed');
 
     if ($name === '') {
         jsonError('El nombre de la categoría es obligatorio');
     }
 
     $stmt = $pdo->prepare("
-        INSERT INTO " . TABLE_PREFIX . "categories (name, icon)
-        VALUES (:name, :icon)
+        INSERT INTO " . TABLE_PREFIX . "categories (name, icon, color_bg, color_text)
+        VALUES (:name, :icon, :color_bg, :color_text)
     ");
-    $stmt->execute([':name' => $name, ':icon' => $icon]);
+    $stmt->execute([
+        ':name' => $name,
+        ':icon' => $icon,
+        ':color_bg' => $colorBg,
+        ':color_text' => $colorText,
+    ]);
 
     $newId = (int) $pdo->lastInsertId();
 
@@ -80,6 +96,52 @@ function createCategory(): void
     $category['movement_count'] = 0;
 
     jsonResponse($category, 201);
+}
+
+function updateCategory(): void
+{
+    global $pdo;
+
+    $input = getInput();
+    $id = (int) ($input['id'] ?? 0);
+    $name = trim($input['name'] ?? '');
+    $icon = trim($input['icon'] ?? 'category');
+    $colorBg = trim($input['color_bg'] ?? 'bg-primary-fixed');
+    $colorText = trim($input['color_text'] ?? 'text-on-primary-fixed');
+
+    if ($id <= 0) {
+        jsonError('ID de categoría no válido');
+    }
+    if ($name === '') {
+        jsonError('El nombre de la categoría es obligatorio');
+    }
+
+    $stmt = $pdo->prepare("
+        UPDATE " . TABLE_PREFIX . "categories
+        SET name = :name, icon = :icon, color_bg = :color_bg, color_text = :color_text
+        WHERE id = :id
+    ");
+    $stmt->execute([
+        ':id' => $id,
+        ':name' => $name,
+        ':icon' => $icon,
+        ':color_bg' => $colorBg,
+        ':color_text' => $colorText,
+    ]);
+
+    $stmt = $pdo->prepare("SELECT * FROM " . TABLE_PREFIX . "categories WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $category = $stmt->fetch();
+
+    if (!$category) {
+        jsonError('Categoría no encontrada', 404);
+    }
+
+    $category['id'] = (int) $category['id'];
+    $category['subcategories'] = [];
+    $category['movement_count'] = 0;
+
+    jsonResponse($category);
 }
 
 function deleteCategory(): void

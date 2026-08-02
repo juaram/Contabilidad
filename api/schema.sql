@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS conta_categories (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    icon VARCHAR(50) NOT NULL DEFAULT 'category',
+    icon VARCHAR(255) NOT NULL DEFAULT 'category',
     color_bg VARCHAR(50) NOT NULL DEFAULT 'bg-primary-fixed',
     color_text VARCHAR(50) NOT NULL DEFAULT 'text-on-primary-fixed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

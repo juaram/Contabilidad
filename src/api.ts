@@ -56,10 +56,25 @@ export async function fetchCategories(): Promise<Category[]> {
   return request<Category[]>('categories.php');
 }
 
-export async function createCategory(name: string, icon: string): Promise<Category> {
+export async function createCategory(
+  name: string,
+  icon: string,
+  colorBgClass: string,
+  colorTextClass: string
+): Promise<Category> {
   return request<Category>('categories.php', {
     method: 'POST',
-    body: JSON.stringify({ name, icon }),
+    body: JSON.stringify({ name, icon, color_bg: colorBgClass, color_text: colorTextClass }),
+  });
+}
+
+export async function updateCategory(
+  id: number,
+  data: { name?: string; icon?: string; color_bg?: string; color_text?: string }
+): Promise<Category> {
+  return request<Category>('categories.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, ...data }),
   });
 }
 

@@ -51,7 +51,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               ¿Cómo personalizar sus categorías?
             </h5>
             <p className="text-on-surface-variant text-base leading-relaxed">
-              En la pestaña <strong>Ajustes</strong>, en el panel de <strong>Gestión de Categorías</strong>, puede pulsar <strong>"+ Nueva"</strong> para añadir una clave principal, o desplegar una categoría existente para añadir o eliminar sus subcategorías.
+              En la pestaña <strong>Ajustes</strong>, en el panel de <strong>Gestión de Categorías</strong>, puede pulsar <strong>"+ Nueva"</strong> para añadir una clave principal, o desplegar una categoría existente para añadir o eliminar sus subcategorías. También puede editar cada categoría para cambiar su nombre, su icono (usando iconos rápidos o un enlace CDN de freeicon.com) y su color.
             </p>
           </div>
 
@@ -64,6 +64,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               Sus datos se guardan de forma local en su navegador para garantizar la máxima protección y privacidad. Puede realizar copias de seguridad o exportar sus movimientos en formato PDF o CSV cuando lo desee.
             </p>
           </div>
+
+          <p className="text-sm text-on-surface-variant">
+            Iconos por <a href="https://freeicon.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Freeicon.com</a>
+          </p>
         </div>
 
         <div className="p-stack-md bg-surface-container-low border-t border-outline-variant flex justify-end">

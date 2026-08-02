@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Budget, BudgetType, Category, Movement, UserPreferences } from '../types';
 import { actualForPeriod } from '../budgetUtils';
 import { NuevoPresupuestoModal } from './NuevoPresupuestoModal';
+import { CategoryIcon } from './CategoryIcon';
 
 interface PresupuestoViewProps {
   budgets: Budget[];
@@ -103,7 +104,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [defaultCategoryId, setDefaultCategoryId] = useState<string>('');
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
-  const [collapsedCatIds, setCollapsedCatIds] = useState<string[]>([]);
+  const [collapsedCatIds, setCollapsedCatIds] = useState<string[]>(() => categories.map((c) => c.id));
 
   const toggleCategory = (id: string) => {
     setCollapsedCatIds((prev) =>
@@ -327,7 +328,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
                   className="w-full bg-surface-container-high px-4 md:px-6 py-4 flex items-center gap-4 border-b-2 border-outline-variant text-left cursor-pointer hover:bg-surface-container-highest transition-colors"
                 >
                   <div className={`w-11 h-11 rounded-full ${agg.category.colorBgClass} ${agg.category.colorTextClass} flex items-center justify-center shrink-0`}>
-                    <span className="material-symbols-outlined text-[24px]">{agg.category.icon}</span>
+                    <CategoryIcon icon={agg.category.icon} className="text-[24px]" imgClassName="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

@@ -55,9 +55,17 @@ function parseBody(req) {
 const routes = {
   'GET /conta/api/categories.php': (req, res) => respond(res, categories),
   'POST /conta/api/categories.php': async (req, res) => {
-    const { name, code, icon } = await parseBody(req);
+    const url = new URL(req.url, 'http://localhost');
+    const data = await parseBody(req);
+    if (url.searchParams.get('_method') === 'PUT') {
+      const idx = categories.findIndex(c => c.id === data.id);
+      if (idx === -1) return respond(res, { error: 'Categoría no encontrada' }, 404);
+      categories[idx] = { ...categories[idx], name: data.name, icon: data.icon || 'category', color_bg: data.color_bg || 'bg-primary-fixed', color_text: data.color_text || 'text-on-primary-fixed' };
+      return respond(res, { ...categories[idx], subcategories: categories[idx].subcategories || [], movement_count: 0 });
+    }
+    const { name, icon, color_bg, color_text } = data;
     const id = Math.max(...categories.map(c => c.id)) + 1;
-    const cat = { id, code: (code || name.slice(0, 3).toUpperCase()), name, icon: icon || 'category', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [] };
+    const cat = { id, name, icon: icon || 'category', color_bg: color_bg || 'bg-primary-fixed', color_text: color_text || 'text-on-primary-fixed', movement_count: 0, subcategories: [] };
     categories.push(cat);
     respond(res, cat, 201);
   },
