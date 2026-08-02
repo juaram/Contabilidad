@@ -1,4 +1,4 @@
-import type { Movement, Category } from './types';
+import type { Movement, Category, Budget } from './types';
 
 const BASE = '/conta/api/';
 
@@ -180,4 +180,46 @@ export async function updateUser(id: number, username: string, password?: string
 
 export async function deleteUser(id: number): Promise<{ message: string }> {
   return request(`users.php?_method=DELETE&id=${id}`, { method: 'POST' });
+}
+
+export interface BudgetFilters {
+  year?: number;
+  month?: string;
+  type?: string;
+}
+
+export interface BudgetPayload {
+  category_id: number;
+  subcategory_id?: number | null;
+  type: 'gasto' | 'ingreso';
+  year: number;
+  month: string;
+  amount: number;
+}
+
+export async function fetchBudgets(filters: BudgetFilters = {}): Promise<Budget[]> {
+  const params = new URLSearchParams();
+  if (filters.year) params.set('year', String(filters.year));
+  if (filters.month) params.set('month', filters.month);
+  if (filters.type) params.set('type', filters.type);
+  const qs = params.toString();
+  return request<Budget[]>(`budgets.php${qs ? '?' + qs : ''}`);
+}
+
+export async function createBudget(data: BudgetPayload): Promise<Budget> {
+  return request<Budget>('budgets.php', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBudget(id: number, data: BudgetPayload): Promise<Budget> {
+  return request<Budget>('budgets.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, ...data }),
+  });
+}
+
+export async function deleteBudget(id: number): Promise<{ message: string }> {
+  return request(`budgets.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }

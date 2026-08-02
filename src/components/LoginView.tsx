@@ -8,6 +8,7 @@ interface LoginViewProps {
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -70,12 +71,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">lock</span>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Contraseña"
-                  className="w-full h-12 pl-10 pr-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base"
+                  className="w-full h-12 pl-10 pr-12 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface cursor-pointer"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                </button>
               </div>
             </div>
             <button
@@ -92,9 +101,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             </button>
           </form>
         </div>
-        <p className="text-center text-outline text-sm mt-4">
-          Acceso privado — Usuario: admin / Contraseña: password
-        </p>
       </div>
     </div>
   );

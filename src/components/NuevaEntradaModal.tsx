@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Category, Movement, MovementType } from '../types';
+import React, { useState, useEffect } from "react";
+import { Category, Movement, MovementType } from "../types";
 
 function parseAmount(value: string): number {
   const s = value.trim();
-  if (s === '') return NaN;
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
+  if (s === "") return NaN;
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
   let normalized = s;
   if (hasComma && hasDot) {
     // Separador decimal = coma, separador de miles = punto
-    normalized = s.replace(/\./g, '').replace(',', '.');
+    normalized = s.replace(/\./g, "").replace(",", ".");
   } else if (hasComma) {
-    normalized = s.replace(',', '.');
-  } else if (hasDot && s.split('.').length === 2 && /\.\d{1,2}$/.test(s)) {
+    normalized = s.replace(",", ".");
+  } else if (hasDot && s.split(".").length === 2 && /\.\d{1,2}$/.test(s)) {
     // Un único punto final: se interpreta como decimal
   } else if (hasDot) {
     // Múltiples puntos: separadores de miles
-    normalized = s.replace(/\./g, '');
+    normalized = s.replace(/\./g, "");
   }
   return parseFloat(normalized);
 }
@@ -27,84 +27,108 @@ interface NuevaEntradaModalProps {
   categories: Category[];
   editingMovement?: Movement | null;
   onClose: () => void;
-  onSave: (entry: Omit<Movement, 'id'>) => void;
+  onSave: (entry: Omit<Movement, "id">) => void;
 }
 
 export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
   isOpen,
-  initialType = 'gasto',
+  initialType = "gasto",
   categories,
   editingMovement = null,
   onClose,
   onSave,
 }) => {
   const [type, setType] = useState<MovementType>(initialType);
-  const [amount, setAmount] = useState<string>('');
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string>('');
-  const [subcategory, setSubcategory] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [amount, setAmount] = useState<string>("");
+  const [date, setDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string>("");
+  const [subcategory, setSubcategory] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
   useEffect(() => {
     if (isOpen) {
       if (editingMovement) {
         setType(editingMovement.type);
-        setAmount(editingMovement.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }));
+        setAmount(
+          editingMovement.amount.toLocaleString("es-ES", {
+            minimumFractionDigits: 2,
+          }),
+        );
         setDate(editingMovement.date);
         setDescription(editingMovement.description);
-        setSelectedCategoryCode(editingMovement.category_id || categories[0]?.id || '');
-        setSubcategory(editingMovement.subcategory || 'General');
+        setSelectedCategoryCode(
+          editingMovement.category_id || categories[0]?.id || "",
+        );
+        setSubcategory(editingMovement.subcategory || "General");
       } else {
         setType(initialType);
-        setAmount('');
-        setDate(new Date().toISOString().split('T')[0]);
-        setDescription('');
-        if (categories.length > 0) {
-          setSelectedCategoryCode(categories[0].id);
-          if (categories[0].subcategories.length > 0) {
-            setSubcategory(categories[0].subcategories[0].name);
-          }
-        }
+        setAmount("");
+        setDate(new Date().toISOString().split("T")[0]);
+        setDescription("");
+        setSelectedCategoryCode("");
+        setSubcategory("");
       }
     }
   }, [isOpen, initialType, categories, editingMovement]);
 
   if (!isOpen) return null;
 
-  const currentCategoryObj = categories.find((c) => c.id === selectedCategoryCode) || categories[0];
+  const currentCategoryObj = selectedCategoryCode
+    ? categories.find((c) => c.id === selectedCategoryCode)
+    : null;
 
   const handleCategoryChange = (id: string) => {
     setSelectedCategoryCode(id);
-    const cat = categories.find((c) => c.id === id);
-    if (cat && cat.subcategories.length > 0) {
-      setSubcategory(cat.subcategories[0].name);
-    } else {
-      setSubcategory('General');
-    }
+    setSubcategory("");
+  };
+
+  const shiftDate = (days: number) => {
+    setDate((prev) => {
+      const d = new Date(`${prev}T00:00:00`);
+      d.setDate(d.getDate() + days);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseAmount(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert('Por favor ingrese un importe válido.');
+      alert("Por favor ingrese un importe válido.");
       return;
     }
 
     if (!description.trim()) {
-      alert('Por favor ingrese una descripción para el movimiento.');
+      alert("Por favor ingrese una descripción para el movimiento.");
+      return;
+    }
+
+    if (!selectedCategoryCode) {
+      alert("Por favor seleccione una categoría.");
+      return;
+    }
+
+    if (!subcategory) {
+      alert("Por favor seleccione una subcategoría.");
       return;
     }
 
     const selectedCat = categories.find((c) => c.id === selectedCategoryCode);
-    const selectedSub = selectedCat?.subcategories.find((s) => s.name === subcategory);
+    const selectedSub = selectedCat?.subcategories.find(
+      (s) => s.name === subcategory,
+    );
 
     onSave({
       date,
-      category_id: selectedCat?.id ?? '',
-      category: selectedCat?.name ?? 'Varios',
+      category_id: selectedCat?.id ?? "",
+      category: selectedCat?.name ?? "Varios",
       subcategory_id: selectedSub?.id ?? null,
-      subcategory: subcategory || 'General',
+      subcategory: subcategory || "General",
       description: description.trim(),
       type,
       amount: parsedAmount,
@@ -114,22 +138,24 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl w-full max-w-lg overflow-hidden shadow-2xl transform transition-all">
         {/* Header */}
-        <div className={`p-4 md:p-stack-md flex items-center justify-between text-white ${
-          type === 'ingreso' ? 'bg-secondary' : 'bg-primary'
-        }`}>
+        <div
+          className={`p-4 md:p-stack-md flex items-center justify-between text-white ${
+            type === "ingreso" ? "bg-secondary" : "bg-primary"
+          }`}
+        >
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-[28px]">
-              {type === 'ingreso' ? 'add_circle' : 'remove_circle'}
+              {type === "ingreso" ? "add_circle" : "remove_circle"}
             </span>
             <h4 className="font-bold text-xl md:text-2xl">
               {editingMovement
-                ? `Editar ${type === 'ingreso' ? 'Ingreso' : 'Gasto'}`
-                : type === 'ingreso'
-                  ? 'Nuevo Ingreso'
-                  : 'Nuevo Gasto'}
+                ? `Editar ${type === "ingreso" ? "Ingreso" : "Gasto"}`
+                : type === "ingreso"
+                  ? "Nuevo Ingreso"
+                  : "Nuevo Gasto"}
             </h4>
           </div>
           <button
@@ -146,22 +172,22 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
           <div className="grid grid-cols-2 gap-3 p-1 bg-surface-container-low rounded-xl border border-outline-variant">
             <button
               type="button"
-              onClick={() => setType('ingreso')}
+              onClick={() => setType("ingreso")}
               className={`py-2.5 rounded-lg font-bold text-base transition-all cursor-pointer ${
-                type === 'ingreso'
-                  ? 'bg-secondary text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                type === "ingreso"
+                  ? "bg-secondary text-white shadow-sm"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               + Ingreso (Haber)
             </button>
             <button
               type="button"
-              onClick={() => setType('gasto')}
+              onClick={() => setType("gasto")}
               className={`py-2.5 rounded-lg font-bold text-base transition-all cursor-pointer ${
-                type === 'gasto'
-                  ? 'bg-error text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                type === "gasto"
+                  ? "bg-error text-white shadow-sm"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               - Gasto (Debe)
@@ -171,27 +197,50 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
           {/* Date in 2 columns */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="block font-semibold text-base text-on-surface">Fecha</label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              />
+              <label className="block font-semibold text-base text-on-surface">
+                Fecha
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="flex-1 h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => shiftDate(1)}
+                  title="Aumentar un día"
+                  className="w-12 h-14 shrink-0 bg-surface border-2 border-outline-variant rounded-xl flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => shiftDate(-1)}
+                  title="Disminuir un día"
+                  className="w-12 h-14 shrink-0 bg-surface border-2 border-outline-variant rounded-xl flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined">remove</span>
+                </button>
+              </div>
             </div>
-          </div> 
+          </div>
 
           {/*Category & Subcategory in 2 columns */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Category */}
             <div className="space-y-1">
-              <label className="block font-semibold text-base text-on-surface">Categoría</label>
+              <label className="block font-semibold text-base text-on-surface">
+                Categoría
+              </label>
               <select
                 value={selectedCategoryCode}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
               >
+                <option value="">Elegir uno</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -200,38 +249,48 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
               </select>
             </div>
 
-          {/* Subcategory */}
-          <div className="space-y-1">
-            <label className="block font-semibold text-base text-on-surface">Subcategoría</label>
-            <select
-              value={subcategory}
-              onChange={(e) => setSubcategory(e.target.value)}
-              className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-            >
-              {currentCategoryObj && currentCategoryObj.subcategories.length > 0 ? (
-                <>
-                  {editingMovement &&
-                  editingMovement.subcategory &&
-                  !currentCategoryObj.subcategories.some((s) => s.name === editingMovement.subcategory) ? (
-                    <option value={editingMovement.subcategory}>{editingMovement.subcategory}</option>
-                  ) : null}
-                  {currentCategoryObj.subcategories.map((sub) => (
-                    <option key={sub.id} value={sub.name}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </>
-              ) : (
-                <option value="General">General</option>
-              )}
-            </select>
-          </div>
-
+            {/* Subcategory */}
+            <div className="space-y-1">
+              <label className="block font-semibold text-base text-on-surface">
+                Subcategoría
+              </label>
+              <select
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
+              >
+                <option value="">Elegir uno</option>
+                {currentCategoryObj ? (
+                  currentCategoryObj.subcategories.length > 0 ? (
+                    <>
+                      {editingMovement &&
+                      editingMovement.subcategory &&
+                      !currentCategoryObj.subcategories.some(
+                        (s) => s.name === editingMovement.subcategory,
+                      ) ? (
+                        <option value={editingMovement.subcategory}>
+                          {editingMovement.subcategory}
+                        </option>
+                      ) : null}
+                      {currentCategoryObj.subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.name}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </>
+                  ) : (
+                    <option value="General">General</option>
+                  )
+                ) : null}
+              </select>
+            </div>
           </div>
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="block font-semibold text-base text-on-surface">Descripción</label>
+            <label className="block font-semibold text-base text-on-surface">
+              Descripción
+            </label>
             <input
               type="text"
               required
@@ -245,7 +304,9 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
           {/* Amount */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="block font-semibold text-base text-on-surface">Importe (€)</label>
+              <label className="block font-semibold text-base text-on-surface">
+                Importe (€)
+              </label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -270,12 +331,12 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
             <button
               type="submit"
               className={`flex-1 h-14 font-bold text-base text-white rounded-xl border-2 transition-all cursor-pointer ${
-                type === 'ingreso'
-                  ? 'bg-secondary border-secondary hover:bg-secondary/90'
-                  : 'bg-primary border-primary hover:bg-primary-container'
+                type === "ingreso"
+                  ? "bg-secondary border-secondary hover:bg-secondary/90"
+                  : "bg-primary border-primary hover:bg-primary-container"
               }`}
             >
-              {editingMovement ? 'Guardar Cambios' : 'Guardar Entrada'}
+              {editingMovement ? "Guardar Cambios" : "Guardar Entrada"}
             </button>
           </div>
         </form>

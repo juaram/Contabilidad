@@ -1,8 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Movement, UserPreferences } from '../types';
+import { Budget, Movement, UserPreferences } from '../types';
+import { actualForPeriod, budgetForPeriod } from '../budgetUtils';
 
 interface InicioViewProps {
   movements: Movement[];
+  budgets: Budget[];
   preferences: UserPreferences;
   onOpenAddModal: (type: 'ingreso' | 'gasto') => void;
   onGoToRegistro: () => void;
@@ -10,6 +12,7 @@ interface InicioViewProps {
 
 export const InicioView: React.FC<InicioViewProps> = ({
   movements,
+  budgets,
   preferences,
   onOpenAddModal,
   onGoToRegistro,
@@ -97,6 +100,10 @@ export const InicioView: React.FC<InicioViewProps> = ({
   }, [movements, selectedYear]);
 
   const shortMonths = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const MONTH_NAMES: Record<string, string> = {
+    '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio',
+    '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
+  };
 
   const monthlyHistory = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
@@ -112,6 +119,23 @@ export const InicioView: React.FC<InicioViewProps> = ({
   }, [movements, selectedYear]);
 
   const maxAmount = Math.max(...monthlyHistory.flatMap((m) => [m.income, m.expense]), 1);
+
+  const currentMonthCode = String(now.getMonth() + 1).padStart(2, '0');
+  const monthBudget = useMemo(
+    () => budgetForPeriod(budgets, selectedYear, currentMonthCode, 'gasto'),
+    [budgets, selectedYear, currentMonthCode],
+  );
+  const monthSpent = useMemo(
+    () => actualForPeriod(movements, selectedYear, currentMonthCode, 'gasto'),
+    [movements, selectedYear, currentMonthCode],
+  );
+  const budgetPct = monthBudget > 0 ? (monthSpent / monthBudget) * 100 : 0;
+  const budgetStatus =
+    monthBudget <= 0 ? 'bg-surface-container-high' : budgetPct >= 100 ? 'bg-error' : budgetPct >= 75 ? 'bg-tertiary' : 'bg-secondary';
+  const budgetRemainingText =
+    monthBudget <= 0
+      ? 'Sin presupuesto para este mes'
+      : `Restante: ${formatAmount(monthBudget - monthSpent)}${currencySymbol}`;
 
   // Recent 3 movements
   const recentMovements = useMemo(() => {
@@ -218,6 +242,45 @@ export const InicioView: React.FC<InicioViewProps> = ({
             <span className="font-bold text-4xl md:text-[56px] text-secondary tabular-nums">
               + {formatAmount(yearlyStats.income)}€
             </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Budget of the Month Section */}
+      <section className="px-4 md:px-margin-desktop py-stack-lg">
+        <div className="flex items-center gap-4 mb-stack-md">
+          <span className="material-symbols-outlined text-primary text-[32px]">savings</span>
+          <h3 className="font-bold text-2xl md:text-3xl text-on-surface">Presupuesto de {MONTH_NAMES[currentMonthCode]}</h3>
+        </div>
+        <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-10 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-widest">
+                Presupuesto mensual de gastos
+              </span>
+              <span className="font-bold text-4xl md:text-[56px] text-primary tabular-nums">
+                {formatAmount(monthBudget)} {currencySymbol}
+              </span>
+            </div>
+            <div className="flex flex-col md:items-end gap-1">
+              <span className="font-semibold text-base text-on-surface-variant">
+                Gastado: <span className="font-bold text-on-surface">{formatAmount(monthSpent)} {currencySymbol}</span>
+              </span>
+              <span className={`font-bold text-lg ${monthBudget <= 0 ? 'text-on-surface-variant' : budgetPct >= 100 ? 'text-error' : budgetPct >= 75 ? 'text-tertiary' : 'text-secondary'}`}>
+                {budgetRemainingText}
+              </span>
+            </div>
+          </div>
+          <div className="w-full bg-surface-container-high h-5 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${budgetStatus}`}
+              style={{ width: `${Math.min(budgetPct, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-sm font-semibold text-on-surface-variant">
+            <span>0 {currencySymbol}</span>
+            <span>{monthBudget > 0 ? `${budgetPct.toFixed(0)}% utilizado` : ''}</span>
+            <span>{formatAmount(monthBudget)} {currencySymbol}</span>
           </div>
         </div>
       </section>

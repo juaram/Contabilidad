@@ -10,6 +10,7 @@ $input = getInput();
 $categories = $input['categories'] ?? null;
 $movements = $input['movements'] ?? null;
 $preferences = $input['preferences'] ?? null;
+$budgets = $input['budgets'] ?? null;
 
 if (!is_array($categories) || !is_array($movements)) {
     jsonError('El archivo de copia de seguridad no es válido');
@@ -69,6 +70,24 @@ try {
             ':type' => ($m['type'] ?? '') === 'ingreso' ? 'ingreso' : 'gasto',
             ':amount' => (float) $m['amount'],
         ]);
+    }
+
+    if (is_array($budgets)) {
+        $budgetStmt = $pdo->prepare("
+            INSERT INTO " . TABLE_PREFIX . "budgets (category_id, subcategory_id, type, year, month, amount)
+            VALUES (:category_id, :subcategory_id, :type, :year, :month, :amount)
+        ");
+        foreach ($budgets as $b) {
+            $oldSubId = (int) ($b['subcategory_id'] ?? 0);
+            $budgetStmt->execute([
+                ':category_id' => $catIdMap[(int) $b['category_id']] ?? 0,
+                ':subcategory_id' => $oldSubId > 0 ? ($subIdMap[$oldSubId] ?? null) : null,
+                ':type' => ($b['type'] ?? 'gasto') === 'ingreso' ? 'ingreso' : 'gasto',
+                ':year' => (int) ($b['year'] ?? date('Y')),
+                ':month' => trim($b['month'] ?? '00'),
+                ':amount' => (float) ($b['amount'] ?? 0),
+            ]);
+        }
     }
 
     if (is_array($preferences)) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Category, Movement, UserPreferences } from '../types';
+import { Budget, Category, Movement, UserPreferences } from '../types';
+import { actualForPeriod, budgetForPeriod } from '../budgetUtils';
 import { ConfirmarEliminarModal } from './ConfirmarEliminarModal';
 
 const formatAmount = (value: number): string => {
@@ -12,6 +13,7 @@ const formatAmount = (value: number): string => {
 interface RegistroViewProps {
   movements: Movement[];
   categories: Category[];
+  budgets: Budget[];
   preferences: UserPreferences;
   onEditMovement: (movement: Movement) => void;
   onDeleteMovement: (id: string) => void;
@@ -20,6 +22,7 @@ interface RegistroViewProps {
 export const RegistroView: React.FC<RegistroViewProps> = ({
   movements,
   categories,
+  budgets,
   preferences,
   onEditMovement,
   onDeleteMovement,
@@ -60,6 +63,25 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     return '€';
   }, [preferences.currency]);
 
+  // Budget for the currently selected period (gastos)
+  const periodBudget = useMemo(
+    () => budgetForPeriod(budgets, selectedYear, selectedMonth, 'gasto'),
+    [budgets, selectedYear, selectedMonth],
+  );
+  const periodSpent = useMemo(
+    () => actualForPeriod(movements, selectedYear, selectedMonth, 'gasto'),
+    [movements, selectedYear, selectedMonth],
+  );
+  const periodPctUsed = periodBudget > 0 ? (periodSpent / periodBudget) * 100 : 0;
+  const periodBudgetStatus =
+    periodBudget <= 0
+      ? 'bg-surface-container-high'
+      : periodPctUsed >= 100
+        ? 'bg-error'
+        : periodPctUsed >= 75
+          ? 'bg-tertiary'
+          : 'bg-secondary';
+
   // Reset Filters
   const handleResetFilters = () => {
     setSelectedYear(new Date().getFullYear());
@@ -68,6 +90,11 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     setSelectedSubcategory('todas');
     setSearchQuery('');
   };
+
+  const filterBorderClass = (modified: boolean): string =>
+    modified
+      ? 'border-4 border-on-tertiary-container focus:border-on-tertiary-container'
+      : 'border-2 border-outline-variant focus:border-primary';
 
   // Available subcategories: from the selected category, or all categories if none selected
   const availableSubcategories = useMemo(() => {
@@ -165,72 +192,58 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
-      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 md:pt-3 pb-0">
+      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 pb-0">
         <div className="max-w-[1100px] mx-auto flex flex-col gap-2">
-          {/* Line 1: Reset + Year Selector Tabs */}
+          {/* Filters: single line */}
           <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">
             <button
               onClick={handleResetFilters}
               title="Restablecer filtros"
-              className="w-10 h-10 shrink-0 flex items-center justify-center text-error hover:bg-error-container rounded-lg transition-colors cursor-pointer"
+              className="w-10 h-10 shrink-0 flex items-center justify-center text-orange-500 hover:bg-error-container rounded-lg transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[20px]">restart_alt</span>
+              <span className="material-symbols-outlined icono-mas-grande text-[20px]">restart_alt</span>
             </button>
 
-            <button
-              onClick={() => setSelectedYear(0)}
-              className={`h-10 px-4 font-bold text-sm rounded-lg border-2 transition-all cursor-pointer whitespace-nowrap ${
-                selectedYear === 0
-                  ? 'bg-primary text-on-primary border-primary shadow-sm'
-                  : 'bg-white text-on-surface border-outline-variant hover:border-primary'
-              }`}
+            {/* Year Selector */}
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[130px] cursor-pointer shrink-0 ${filterBorderClass(
+                selectedYear !== new Date().getFullYear(),
+              )}`}
             >
-              Todos los años
-            </button>
-            {availableYears.map((year) => (
-              <button
-                key={year}
-                onClick={() => {
-                  setSelectedYear(year);
-                }}
-                className={`h-10 px-4 font-bold text-sm rounded-lg border-2 transition-all cursor-pointer whitespace-nowrap ${
-                  selectedYear === year
-                    ? 'bg-primary text-on-primary border-primary shadow-sm'
-                    : 'bg-white text-on-surface border-outline-variant hover:border-primary'
-                }`}
-              >
-                {year}
-              </button>
-            ))}
-          </div>
+              <option value={0}>Años (Todos)</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
 
-          {/* Line 2: Filter Controls + Search Bar */}
-          <div className="flex flex-wrap items-center gap-2">
             {/* Month Selector */}
-            <div className="flex items-center bg-white border-2 border-outline-variant rounded-lg h-10 px-2.5 gap-1.5 shrink-0">
-              <span className="material-symbols-outlined text-on-surface-variant text-[18px]">filter_alt</span>
-              <select
-                value={selectedMonth}
-                onChange={(e) => {
-                  setSelectedMonth(e.target.value);
-                }}
-                className="bg-transparent font-medium text-sm outline-none cursor-pointer pr-1"
-              >
-                <option value="todos">Todos los meses</option>
-                <option value="01">Enero</option>
-                <option value="02">Febrero</option>
-                <option value="03">Marzo</option>
-                <option value="04">Abril</option>
-                <option value="05">Mayo</option>
-                <option value="06">Junio</option>
-                <option value="07">Julio</option>
-                <option value="08">Agosto</option>
-                <option value="09">Septiembre</option>
-                <option value="10">Octubre</option>
-                <option value="11">Noviembre</option>
-                <option value="12">Diciembre</option>
-              </select>
-            </div>
+            <select
+              value={selectedMonth}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value);
+              }}
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[130px] cursor-pointer shrink-0 ${filterBorderClass(
+                selectedMonth !== 'todos',
+              )}`}
+            >
+              <option value="todos">Meses (Todos)</option>
+              <option value="01">Enero</option>
+              <option value="02">Febrero</option>
+              <option value="03">Marzo</option>
+              <option value="04">Abril</option>
+              <option value="05">Mayo</option>
+              <option value="06">Junio</option>
+              <option value="07">Julio</option>
+              <option value="08">Agosto</option>
+              <option value="09">Septiembre</option>
+              <option value="10">Octubre</option>
+              <option value="11">Noviembre</option>
+              <option value="12">Diciembre</option>
+            </select>
 
             {/* Category Filter */}
             <select
@@ -239,7 +252,9 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 setSelectedCategory(e.target.value);
                 setSelectedSubcategory('todas');
               }}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[140px] cursor-pointer"
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[140px] cursor-pointer shrink-0 ${filterBorderClass(
+                selectedCategory !== 'todas',
+              )}`}
             >
               <option value="todas">Categoría (Todas)</option>
               {categories.map((cat) => (
@@ -255,7 +270,9 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
               onChange={(e) => {
                 setSelectedSubcategory(e.target.value);
               }}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[140px] cursor-pointer"
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[140px] cursor-pointer shrink-0 ${filterBorderClass(
+                selectedSubcategory !== 'todas',
+              )}`}
             >
               <option value="todas">Subcategoría (Todas)</option>
               {availableSubcategories.map((sub) => (
@@ -277,7 +294,9 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   setSearchQuery(e.target.value);
                 }}
                 placeholder="Buscar descripción..."
-                className="w-full h-10 pl-10 pr-4 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none"
+                className={`w-full h-10 pl-10 pr-4 bg-white font-medium text-sm rounded-lg outline-none ${filterBorderClass(
+                  searchQuery.trim() !== '',
+                )}`}
               />
             </div>
           </div>
@@ -523,14 +542,18 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           {/* Card 1: Presupuesto Mensual */}
           <div className="bg-white border-2 border-outline-variant rounded-xl p-stack-md flex flex-col gap-2 shadow-sm">
             <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-wider">
-              Presupuesto Mensual
+              {selectedMonth === 'todos' ? `Presupuesto ${selectedYear}` : 'Presupuesto Mensual'}
             </span>
             <div className="flex items-end justify-between">
-              <span className="font-bold text-3xl text-primary">1.800,00 {currencySymbol}</span>
-              <span className="font-semibold text-base text-secondary">68% restante</span>
+              <span className="font-bold text-3xl text-primary">{formatAmount(periodBudget)} {currencySymbol}</span>
+              <span className={`font-semibold text-base ${periodBudget <= 0 ? 'text-on-surface-variant' : periodPctUsed >= 100 ? 'text-error' : 'text-secondary'}`}>
+                {periodBudget <= 0
+                  ? 'Sin presupuesto'
+                  : `${Math.max(0, 100 - periodPctUsed).toFixed(0)}% restante`}
+              </span>
             </div>
             <div className="w-full bg-surface-container-high h-4 rounded-full mt-2 overflow-hidden">
-              <div className="bg-secondary h-full" style={{ width: '32%' }} />
+              <div className={`${periodBudgetStatus} h-full`} style={{ width: `${Math.min(periodPctUsed, 100)}%` }} />
             </div>
           </div>
 

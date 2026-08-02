@@ -35,6 +35,18 @@ export interface UserPreferences {
   appSubtitle: string;
 }
 
+export type BudgetType = 'gasto' | 'ingreso';
+
+export interface Budget {
+  id: string;
+  category_id: string;
+  subcategory_id: string | null;
+  type: BudgetType;
+  year: number;
+  month: string; // '00' = recurrente (todos los meses); '01'..'12' = mes concreto
+  amount: number;
+}
+
 export interface FilterState {
   year: number;
   month: string; // 'todos' | '01' | ... | '10'

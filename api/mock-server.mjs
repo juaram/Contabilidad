@@ -23,6 +23,18 @@ const movements = [
   { id: 10, date: '2024-09-10', category_id: 2, subcategory_id: 4, description: 'Compra semanal Carrefour', type: 'gasto', amount: 92.00 },
 ];
 
+const budgets = [
+  { id: 1, category_id: 1, subcategory_id: 1, type: 'gasto', year: 2024, month: '00', amount: 70.00 },
+  { id: 2, category_id: 1, subcategory_id: 2, type: 'gasto', year: 2024, month: '00', amount: 40.00 },
+  { id: 3, category_id: 1, subcategory_id: 3, type: 'gasto', year: 2024, month: '00', amount: 600.00 },
+  { id: 4, category_id: 2, subcategory_id: 4, type: 'gasto', year: 2024, month: '00', amount: 400.00 },
+  { id: 5, category_id: 2, subcategory_id: 5, type: 'gasto', year: 2024, month: '00', amount: 80.00 },
+  { id: 6, category_id: 3, subcategory_id: 6, type: 'gasto', year: 2024, month: '00', amount: 50.00 },
+  { id: 7, category_id: 4, subcategory_id: 8, type: 'ingreso', year: 2024, month: '00', amount: 1250.00 },
+  { id: 8, category_id: 4, subcategory_id: 9, type: 'ingreso', year: 2024, month: '00', amount: 300.00 },
+  { id: 9, category_id: 5, subcategory_id: 10, type: 'gasto', year: 2024, month: '00', amount: 60.00 },
+];
+
 const catMap = Object.fromEntries(categories.map(c => [c.id, c]));
 const subMap = {};
 categories.forEach(c => c.subcategories.forEach(s => { subMap[s.id] = s; }));
@@ -123,6 +135,38 @@ const routes = {
   },
   'GET /conta/api/preferences.php': (req, res) => respond(res, { id: 1, currency: 'Euro (€) - EUR', date_format: 'DD / MM / AAAA (31/12/2024)', high_contrast: 0, app_title: 'Mis Cuentas', app_subtitle: 'Control Financiero' }),
   'PUT /conta/api/preferences.php': async (req, res) => respond(res, { id: 1, ...await parseBody(req) }),
+  'GET /conta/api/budgets.php': (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const year = parseInt(url.searchParams.get('year')) || 0;
+    const month = url.searchParams.get('month') || '';
+    const type = url.searchParams.get('type') || '';
+    let filtered = budgets;
+    if (year) filtered = filtered.filter(b => b.year === year);
+    if (month && month !== 'todos') filtered = filtered.filter(b => b.month === month);
+    if (type) filtered = filtered.filter(b => b.type === type);
+    respond(res, filtered.map(b => ({ ...b, category: catMap[b.category_id]?.name, subcategory: subMap[b.subcategory_id]?.name || '' })));
+  },
+  'POST /conta/api/budgets.php': async (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const data = await parseBody(req);
+    if (url.searchParams.get('_method') === 'PUT') {
+      const idx = budgets.findIndex(b => b.id === data.id);
+      if (idx === -1) return respond(res, { error: 'Presupuesto no encontrado' }, 404);
+      budgets[idx] = { ...budgets[idx], category_id: data.category_id, subcategory_id: data.subcategory_id || null, type: data.type, year: data.year, month: data.month, amount: data.amount };
+      const b = budgets[idx];
+      return respond(res, { ...b, category: catMap[b.category_id]?.name, subcategory: subMap[b.subcategory_id]?.name || '' });
+    }
+    const id = Math.max(...budgets.map(b => b.id), 0) + 1;
+    const b = { id, category_id: data.category_id, subcategory_id: data.subcategory_id || null, type: data.type, year: data.year, month: data.month, amount: data.amount };
+    budgets.push(b);
+    respond(res, { ...b, category: catMap[b.category_id]?.name, subcategory: subMap[b.subcategory_id]?.name || '' }, 201);
+  },
+  'DELETE /conta/api/budgets.php': (req, res) => {
+    const id = parseInt(new URL(req.url, 'http://localhost').searchParams.get('id'));
+    const idx = budgets.findIndex(b => b.id === id);
+    if (idx !== -1) budgets.splice(idx, 1);
+    respond(res, { message: 'Presupuesto eliminado' });
+  },
   'POST /conta/api/login.php': async (req, res) => {
     const { username, password } = await parseBody(req);
     if (username === 'admin' && password === 'password') {

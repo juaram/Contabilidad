@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { InicioView } from './components/InicioView';
 import { RegistroView } from './components/RegistroView';
+import { PresupuestoView } from './components/PresupuestoView';
 import { AjustesView } from './components/AjustesView';
 import { NuevaEntradaModal } from './components/NuevaEntradaModal';
 import { NuevaCategoriaModal } from './components/NuevaCategoriaModal';
@@ -10,15 +11,16 @@ import { HelpModal } from './components/HelpModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { UsersManagementModal } from './components/UsersManagementModal';
 import { ImportacionErroresModal, InvalidRecord } from './components/ImportacionErroresModal';
-import { Category, Movement, MovementType, UserPreferences } from './types';
+import { Budget, Category, Movement, MovementType, UserPreferences } from './types';
 import * as api from './api';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
-  const [activeTab, setActiveTab] = useState<'inicio' | 'registro' | 'ajustes'>('inicio');
+  const [activeTab, setActiveTab] = useState<'inicio' | 'registro' | 'presupuestos' | 'ajustes'>('inicio');
   const [categories, setCategories] = useState<Category[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>({
     currency: 'Euro (€) - EUR',
     dateFormat: 'DD / MM / AAAA (31/12/2024)',
@@ -46,9 +48,11 @@ export default function App() {
       api.fetchCategories(),
       api.fetchMovements({ year: '', month: '' }),
       api.fetchPreferences(),
-    ]).then(([cats, movData, prefs]) => {
+      api.fetchBudgets(),
+    ]).then(([cats, movData, prefs, budgetData]) => {
       setCategories(cats.map(normalizeCategory));
       setMovements(movData.movements.map(normalizeMovement));
+      setBudgets(budgetData.map(normalizeBudget));
       setPreferences({
         currency: prefs.currency,
         dateFormat: prefs.date_format,
@@ -179,6 +183,48 @@ export default function App() {
     }
   };
 
+  const handleSaveBudget = async (data: {
+    id?: string;
+    category_id: string;
+    subcategory_id: string | null;
+    type: MovementType;
+    year: number;
+    month: string;
+    amount: number;
+  }) => {
+    try {
+      const payload = {
+        category_id: parseInt(data.category_id),
+        subcategory_id: data.subcategory_id ? parseInt(data.subcategory_id) : null,
+        type: data.type,
+        year: data.year,
+        month: data.month,
+        amount: data.amount,
+      };
+      if (data.id) {
+        const saved = await api.updateBudget(parseInt(data.id), payload);
+        setBudgets((prev) => prev.map((b) => (b.id === data.id ? normalizeBudget(saved) : b)));
+        showToast('✓ Presupuesto actualizado correctamente.');
+      } else {
+        const saved = await api.createBudget(payload);
+        setBudgets((prev) => [...prev, normalizeBudget(saved)]);
+        showToast('✓ Presupuesto creado correctamente.');
+      }
+    } catch {
+      showToast('Error al guardar el presupuesto');
+    }
+  };
+
+  const handleDeleteBudget = async (id: string) => {
+    try {
+      await api.deleteBudget(parseInt(id));
+      setBudgets((prev) => prev.filter((b) => b.id !== id));
+      showToast('✓ Presupuesto eliminado.');
+    } catch {
+      showToast('Error al eliminar el presupuesto');
+    }
+  };
+
   const handleExportData = async (type: 'pdf' | 'excel') => {
     if (type === 'pdf') {
       window.print();
@@ -215,7 +261,7 @@ export default function App() {
   };
 
   const handleBackupData = () => {
-    const backup = { categories, movements, preferences, exportDate: new Date().toISOString() };
+    const backup = { categories, movements, budgets, preferences, exportDate: new Date().toISOString() };
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
     const link = document.createElement('a');
     link.setAttribute('href', dataStr);
@@ -286,10 +332,13 @@ export default function App() {
 
       <main className="pt-24 min-h-screen bg-surface-container-lowest">
         {activeTab === 'inicio' && (
-          <InicioView movements={movements} preferences={preferences} onOpenAddModal={handleOpenAddEntryModal} onGoToRegistro={() => setActiveTab('registro')} />
+          <InicioView movements={movements} budgets={budgets} preferences={preferences} onOpenAddModal={handleOpenAddEntryModal} onGoToRegistro={() => setActiveTab('registro')} />
         )}
         {activeTab === 'registro' && (
-          <RegistroView movements={movements} categories={categories} preferences={preferences} onEditMovement={handleOpenEditEntryModal} onDeleteMovement={handleDeleteMovement} />
+          <RegistroView movements={movements} categories={categories} budgets={budgets} preferences={preferences} onEditMovement={handleOpenEditEntryModal} onDeleteMovement={handleDeleteMovement} />
+        )}
+        {activeTab === 'presupuestos' && (
+          <PresupuestoView budgets={budgets} categories={categories} movements={movements} preferences={preferences} onSaveBudget={handleSaveBudget} onDeleteBudget={handleDeleteBudget} />
         )}
         {activeTab === 'ajustes' && (
           <AjustesView categories={categories} preferences={preferences} username={username} onUpdatePreferences={(updated) => {
@@ -341,5 +390,17 @@ function normalizeMovement(m: any): Movement {
     description: m.description,
     type: m.type,
     amount: m.amount,
+  };
+}
+
+function normalizeBudget(b: any): Budget {
+  return {
+    id: String(b.id),
+    category_id: b.category_id !== undefined ? String(b.category_id) : '',
+    subcategory_id: b.subcategory_id ? String(b.subcategory_id) : null,
+    type: b.type === 'ingreso' ? 'ingreso' : 'gasto',
+    year: Number(b.year),
+    month: String(b.month || '00'),
+    amount: Number(b.amount),
   };
 }
