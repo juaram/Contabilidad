@@ -193,7 +193,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
       <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 pb-0">
-        <div className="max-w-[1100px] mx-auto flex flex-col gap-2">
+        <div className="max-w-275 mx-auto flex flex-col gap-2">
           {/* Filters: single line */}
           <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">
             <button
@@ -208,7 +208,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[130px] cursor-pointer shrink-0 ${filterBorderClass(
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-32.5 cursor-pointer shrink-0 ${filterBorderClass(
                 selectedYear !== new Date().getFullYear(),
               )}`}
             >
@@ -226,7 +226,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
               onChange={(e) => {
                 setSelectedMonth(e.target.value);
               }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[130px] cursor-pointer shrink-0 ${filterBorderClass(
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-32.5 cursor-pointer shrink-0 ${filterBorderClass(
                 selectedMonth !== 'todos',
               )}`}
             >
@@ -252,7 +252,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 setSelectedCategory(e.target.value);
                 setSelectedSubcategory('todas');
               }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[140px] cursor-pointer shrink-0 ${filterBorderClass(
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-35 cursor-pointer shrink-0 ${filterBorderClass(
                 selectedCategory !== 'todas',
               )}`}
             >
@@ -270,7 +270,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
               onChange={(e) => {
                 setSelectedSubcategory(e.target.value);
               }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-[140px] cursor-pointer shrink-0 ${filterBorderClass(
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-35 cursor-pointer shrink-0 ${filterBorderClass(
                 selectedSubcategory !== 'todas',
               )}`}
             >
@@ -283,7 +283,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             </select>
 
             {/* Search Bar — takes remaining space */}
-            <div className="relative flex-1 min-w-[220px]">
+            <div className="relative flex-1 min-w-55">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                 search
               </span>
@@ -370,7 +370,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
       {/* Ledger Table Section */}
       <section className="px-4 md:px-margin-desktop pt-1 pb-stack-lg">
-        <div className="max-w-[1100px] mx-auto w-full">
+        <div className="max-w-275 mx-auto w-full">
           <div className="bg-white border-2 border-t-0 border-outline-variant rounded-b-xl overflow-x-auto shadow-sm">
             <table className="w-full border-collapse text-left table-fixed">
               <colgroup>
@@ -538,7 +538,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
       {/* Summary Cards Section at Bottom */}
       <section className="px-4 md:px-margin-desktop py-stack-lg bg-surface-container mt-4">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="max-w-275 mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Presupuesto Mensual */}
           <div className="bg-white border-2 border-outline-variant rounded-xl p-stack-md flex flex-col gap-2 shadow-sm">
             <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-wider">
