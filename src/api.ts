@@ -79,7 +79,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: number): Promise<void> {
-  await request(`categories.php?id=${id}`, { method: 'DELETE' });
+  await request(`categories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
 export async function createSubcategory(categoryId: number, name: string): Promise<{ id: number; category_id: number; name: string }> {
@@ -90,7 +90,7 @@ export async function createSubcategory(categoryId: number, name: string): Promi
 }
 
 export async function deleteSubcategory(id: number): Promise<void> {
-  await request(`subcategories.php?id=${id}`, { method: 'DELETE' });
+  await request(`subcategories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
 export async function fetchMovements(filters: MovementFilters = {}): Promise<PaginatedMovements> {

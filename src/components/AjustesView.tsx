@@ -11,6 +11,7 @@ interface AjustesViewProps {
   onOpenEditCategoryModal: (category: Category) => void;
   onOpenAddSubcategoryModal: (categoryName: string) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
+  onDeleteCategory: (categoryId: string) => void;
   onExportData: (type: 'pdf' | 'excel') => void;
   onImportData: () => void;
   onBackupData: () => void;
@@ -29,6 +30,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onOpenEditCategoryModal,
   onOpenAddSubcategoryModal,
   onDeleteSubcategory,
+  onDeleteCategory,
   onExportData,
   onImportData,
   onBackupData,
@@ -117,6 +119,13 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                             className="p-2 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors cursor-pointer"
                           >
                             <span className="material-symbols-outlined text-[24px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => onDeleteCategory(cat.id)}
+                            title="Eliminar categoría"
+                            className="p-2 rounded-full text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[24px]">delete</span>
                           </button>
                           <button
                             onClick={() => toggleCategoryExpand(cat.id)}

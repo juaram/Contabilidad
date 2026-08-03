@@ -185,7 +185,22 @@ Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campo
 | Editar movimientos | ❌ Pendiente |
 | Multiusuario / autenticación | ❌ Pendiente |
 
-## 9. Configuración
+## 9. Tabla de actualización de movimientos (migraciones masivas)
+
+Para actualizaciones masivas de movimientos se usa una tabla de reglas. Cada fila describe un filtro de selección y los valores finales a aplicar.
+
+| Filtro Categoría | Filtro Subcategoría | Filtro descripción | Categoría final | Subcategoría final | Descripción final |
+|---|---|---|---|---|---|
+| `Bloque5` | `Gasto` | `*mercadona*` | `Bloque5` | `Comida` | `Mercadona` |
+
+### Semántica
+
+- **Filtro Categoría / Filtro Subcategoría**: coincidencia exacta por nombre.
+- **Filtro descripción**: coincidencia por subcadena. El `*` actúa como comodín que representa cualquier texto antes/después (se busca si la descripción contiene el texto entre asteriscos).
+- **Categoría final / Subcategoría final**: nombre destino. Se resuelven a sus IDs en BD; si la subcategoría no existe en la categoría final se crea (o se informa).
+- **Descripción final**: nuevo valor exacto de la descripción. Si contiene el marcador `#mes`, se sustituye por el literal del mes de la fecha del movimiento (enero, febrero, …).
+
+## 10. Configuración
 
 - Base Vite: `/conta/`
 - API base: `/conta/api/`

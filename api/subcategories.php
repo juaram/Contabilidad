@@ -4,6 +4,10 @@ require_once __DIR__ . '/config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+if ($method === 'POST' && isset($_GET['_method'])) {
+    $method = strtoupper($_GET['_method']);
+}
+
 switch ($method) {
     case 'POST':
         createSubcategory();
@@ -60,6 +64,14 @@ function deleteSubcategory(): void
     $id = (int) ($_GET['id'] ?? 0);
     if ($id <= 0) {
         jsonError('ID de subcategoría no válido');
+    }
+
+    $check = $pdo->prepare("SELECT COUNT(*) AS cnt FROM " . TABLE_PREFIX . "movements WHERE subcategory_id = :id");
+    $check->execute([':id' => $id]);
+    $result = $check->fetch();
+
+    if ((int) $result['cnt'] > 0) {
+        jsonError('No se puede eliminar: la subcategoría tiene movimientos asociados', 409);
     }
 
     $stmt = $pdo->prepare("DELETE FROM " . TABLE_PREFIX . "subcategories WHERE id = :id");
