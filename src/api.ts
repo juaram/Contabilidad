@@ -79,7 +79,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: number): Promise<void> {
-  await request(`categories.php?id=${id}`, { method: 'DELETE' });
+  await request(`categories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
 export async function createSubcategory(categoryId: number, name: string): Promise<{ id: number; category_id: number; name: string }> {
@@ -90,7 +90,7 @@ export async function createSubcategory(categoryId: number, name: string): Promi
 }
 
 export async function deleteSubcategory(id: number): Promise<void> {
-  await request(`subcategories.php?id=${id}`, { method: 'DELETE' });
+  await request(`subcategories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
 export async function fetchMovements(filters: MovementFilters = {}): Promise<PaginatedMovements> {
@@ -195,6 +195,40 @@ export async function updateUser(id: number, username: string, password?: string
 
 export async function deleteUser(id: number): Promise<{ message: string }> {
   return request(`users.php?_method=DELETE&id=${id}`, { method: 'POST' });
+}
+
+export interface MaintenanceRule {
+  filter_category: string;
+  filter_subcategory: string;
+  filter_description?: string;
+  final_category: string;
+  final_subcategory: string;
+  final_description?: string;
+}
+
+export interface MaintenancePreviewItem {
+  id: number;
+  date: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  type: 'ingreso' | 'gasto';
+  amount: number;
+}
+
+export interface MaintenanceResult {
+  preview: boolean;
+  total?: number;
+  movements?: MaintenancePreviewItem[];
+  updated?: number;
+  created_subcategories?: string[];
+}
+
+export async function runMaintenance(rule: MaintenanceRule, preview: boolean = true): Promise<MaintenanceResult> {
+  return request<MaintenanceResult>('maintenance.php', {
+    method: 'POST',
+    body: JSON.stringify({ ...rule, preview }),
+  });
 }
 
 export interface BudgetFilters {

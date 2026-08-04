@@ -97,6 +97,7 @@ Todas las tablas usan el prefijo `conta_`.
 | POST | `/conta/api/preferences.php` | Actualizar preferencias |
 | GET | `/conta/api/export.php?format=csv` | Exportar CSV (UTF-8 BOM, separador `;`) |
 | POST | `/conta/api/import.php` | Importar CSV (multipart, campo `file`) |
+| POST | `/conta/api/maintenance.php` | Actualización masiva de movimientos (preview o apply) |
 
 ## 6. Frontend — Estructura actual
 
@@ -185,7 +186,26 @@ Las funciones `normalizeMovement()` y `normalizeCategory()` convierten los campo
 | Editar movimientos | ❌ Pendiente |
 | Multiusuario / autenticación | ❌ Pendiente |
 
-## 9. Configuración
+## 9. Tabla de actualización de movimientos (migraciones masivas)
+
+Para actualizaciones masivas de movimientos se usa una tabla de reglas. Cada fila describe un filtro de selección y los valores finales a aplicar.
+
+| Filtro Categoría | Filtro Subcategoría | Filtro descripción | Categoría final | Subcategoría final | Descripción final |
+|---|---|---|---|---|---|
+| `Bloque5` | `Gasto` | `*mercadona*` | `Bloque5` | `Comida` | `Mercadona` |
+
+### Semántica
+
+- **Filtro Categoría / Filtro Subcategoría**: coincidencia exacta por nombre.
+- **Filtro descripción**: opcional. Si se omite, se seleccionan todos los movimientos de la categoría/subcategoría inicial. Si se indica, admite varias alternativas separadas por `OR` (insensible a mayúsculas) y cada una usa `*` como comodín: `*luz* OR *repsol*` busca descripciones que contengan "luz" o "repsol".
+- **Categoría final / Subcategoría final**: nombre destino. Se resuelven a sus IDs en BD; si la subcategoría no existe en la categoría final se crea automáticamente.
+- **Descripción final**: opcional. Si se omite, se conserva la descripción original. Si se indica, se sustituye; el marcador `#mes` se reemplaza por el literal del mes de la fecha del movimiento (enero, febrero, …).
+
+### Endpoint
+
+`POST /conta/api/maintenance.php` recibe el JSON `{ filter_category, filter_subcategory, filter_description, final_category, final_subcategory, final_description, preview }`. Con `preview: true` devuelve `{ preview, total, movements }` sin modificar nada; con `preview: false` aplica los cambios en una transacción y devuelve `{ preview: false, updated, created_subcategories }`. El formulario se encuentra en la pestaña "Mantenimiento de Movimientos" de Ajustes (componente `MantenimientoMovimientos.tsx`).
+
+## 10. Configuración
 
 - Base Vite: `/conta/`
 - API base: `/conta/api/`

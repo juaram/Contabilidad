@@ -197,6 +197,66 @@ const routes = {
     res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
     res.end('\uFEFF' + csv);
   },
+  'POST /conta/api/maintenance.php': async (req, res) => {
+    const data = await parseBody(req);
+    const { filter_category, filter_subcategory, filter_description = '', final_category, final_subcategory, final_description = '', preview } = data;
+
+    const findSub = (catName, subName) => {
+      const cat = categories.find(c => c.name === catName);
+      if (!cat) return null;
+      const sub = cat.subcategories.find(s => s.name === subName);
+      return sub ? { cat, sub } : null;
+    };
+
+    const filterPair = findSub(filter_category, filter_subcategory);
+    if (!filterPair) return respond(res, { error: `La subcategoría inicial '${filter_subcategory}' no existe en '${filter_category}'` }, 400);
+    let finalPair = findSub(final_category, final_subcategory);
+    if (!finalPair) {
+      const cat = categories.find(c => c.name === final_category);
+      if (!cat) return respond(res, { error: `La categoría final '${final_category}' no existe` }, 400);
+      const id = Math.max(...Object.keys(subMap).map(Number), 0) + 1;
+      const sub = { id, category_id: cat.id, name: final_subcategory };
+      subMap[id] = sub;
+      cat.subcategories.push(sub);
+      finalPair = { cat, sub };
+    }
+
+    const patterns = [];
+    if (filter_description.trim()) {
+      for (const token of filter_description.split(/\s+OR\s+/i)) {
+        const t = token.trim();
+        if (t) patterns.push(t.replace(/\*/g, '%'));
+      }
+    }
+    const matches = movements.filter(m =>
+      m.category_id === filterPair.cat.id && m.subcategory_id === filterPair.sub.id &&
+      (patterns.length === 0 || patterns.some(p => m.description.toLowerCase().includes(p.replace(/%/g, '').toLowerCase())))
+    );
+    const monthLiterals = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    if (preview) {
+      return respond(res, {
+        preview: true,
+        total: matches.length,
+        movements: matches.map(m => ({ id: m.id, date: m.date, description: m.description, category: filterPair.cat.name, subcategory: filterPair.sub.name, type: m.type, amount: m.amount })),
+      });
+    }
+
+    for (const m of matches) {
+      let desc = m.description;
+      if (final_description.trim()) {
+        desc = final_description;
+        if (desc.includes('#mes')) {
+          const monthNum = parseInt(m.date.slice(5, 7), 10);
+          desc = desc.replace(/#mes/g, monthLiterals[monthNum] || '');
+        }
+      }
+      m.category_id = finalPair.cat.id;
+      m.subcategory_id = finalPair.sub.id;
+      m.description = desc;
+    }
+    respond(res, { preview: false, updated: matches.length });
+  },
 };
 
 const server = http.createServer((req, res) => {
