@@ -25,16 +25,17 @@ try {
 
     $catIdMap = [];
     $catStmt = $pdo->prepare("
-        INSERT INTO " . TABLE_PREFIX . "categories (name, icon, color_bg, color_text)
-        VALUES (:name, :icon, :color_bg, :color_text)
+        INSERT INTO " . TABLE_PREFIX . "categories (name, icon, color_bg, color_text, sort_order)
+        VALUES (:name, :icon, :color_bg, :color_text, :sort_order)
     ");
-    foreach ($categories as $cat) {
+    foreach ($categories as $index => $cat) {
         $oldId = (int) ($cat['id'] ?? 0);
         $catStmt->execute([
             ':name' => trim($cat['name'] ?? ''),
             ':icon' => trim($cat['icon'] ?? 'category'),
             ':color_bg' => $cat['colorBgClass'] ?? $cat['color_bg'] ?? 'bg-primary-fixed',
             ':color_text' => $cat['colorTextClass'] ?? $cat['color_text'] ?? 'text-on-primary-fixed',
+            ':sort_order' => isset($cat['sortOrder']) ? (int) $cat['sortOrder'] : $index,
         ]);
         $catIdMap[$oldId] = (int) $pdo->lastInsertId();
     }

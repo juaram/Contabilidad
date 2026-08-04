@@ -219,6 +219,24 @@ export default function App() {
     }
   };
 
+  const handleReorderCategories = async (orderedIds: string[]) => {
+    const order = orderedIds.map((id, index) => ({ id: parseInt(id), sort_order: index }));
+    const previous = categories;
+    setCategories((prev) => {
+      const sorted = order
+        .map((o) => prev.find((c) => c.id === String(o.id)))
+        .filter((c): c is Category => !!c);
+      return sorted;
+    });
+    try {
+      const saved = await api.reorderCategories(order);
+      showToast('✓ Orden de categorías actualizado.');
+    } catch {
+      setCategories(previous);
+      showToast('Error al guardar el orden de categorías');
+    }
+  };
+
   const handleSaveBudget = async (data: {
     id?: string;
     category_id: string;
@@ -387,7 +405,7 @@ export default function App() {
               app_title: newPrefs.appTitle,
               app_subtitle: newPrefs.appSubtitle,
             }).catch(() => showToast('Error al guardar preferencias'));
-          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onDeleteCategory={handleDeleteCategory} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
+          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
         )}
       </main>
 
@@ -408,6 +426,7 @@ function normalizeCategory(c: any): Category {
     icon: c.icon,
     colorBgClass: c.color_bg || c.colorBgClass || 'bg-primary-fixed',
     colorTextClass: c.color_text || c.colorTextClass || 'text-on-primary-fixed',
+    sortOrder: c.sort_order ?? c.sortOrder ?? 0,
     subcategories: (c.subcategories || []).map((s: any) => ({
       id: String(s.id),
       name: s.name,

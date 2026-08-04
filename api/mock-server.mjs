@@ -3,11 +3,11 @@ import http from 'node:http';
 const PORT = 8080;
 
 const categories = [
-  { id: 1, code: 'VIV', name: 'Vivienda / Hogar', icon: 'home', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [{ id: 1, category_id: 1, name: 'Luz' }, { id: 2, category_id: 1, name: 'Agua' }, { id: 3, category_id: 1, name: 'Alquiler' }] },
-  { id: 2, code: 'ALM', name: 'Alimentación', icon: 'shopping_basket', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [{ id: 4, category_id: 2, name: 'Supermercado' }, { id: 5, category_id: 2, name: 'Restaurantes' }] },
-  { id: 3, code: 'SAL', name: 'Salud', icon: 'medical_services', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [{ id: 6, category_id: 3, name: 'Farmacia' }, { id: 7, category_id: 3, name: 'Médico' }] },
-  { id: 4, code: 'ING', name: 'Pensiones e Ingresos', icon: 'savings', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [{ id: 8, category_id: 4, name: 'Pensión' }, { id: 9, category_id: 4, name: 'Otros Ingresos' }] },
-  { id: 5, code: 'VAR', name: 'Varios y Ocio', icon: 'category', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', movement_count: 0, subcategories: [{ id: 10, category_id: 5, name: 'Transporte' }, { id: 11, category_id: 5, name: 'Ocio' }] },
+  { id: 1, code: 'VIV', name: 'Vivienda / Hogar', icon: 'home', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 0, movement_count: 0, subcategories: [{ id: 1, category_id: 1, name: 'Luz' }, { id: 2, category_id: 1, name: 'Agua' }, { id: 3, category_id: 1, name: 'Alquiler' }] },
+  { id: 2, code: 'ALM', name: 'Alimentación', icon: 'shopping_basket', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 1, movement_count: 0, subcategories: [{ id: 4, category_id: 2, name: 'Supermercado' }, { id: 5, category_id: 2, name: 'Restaurantes' }] },
+  { id: 3, code: 'SAL', name: 'Salud', icon: 'medical_services', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 2, movement_count: 0, subcategories: [{ id: 6, category_id: 3, name: 'Farmacia' }, { id: 7, category_id: 3, name: 'Médico' }] },
+  { id: 4, code: 'ING', name: 'Pensiones e Ingresos', icon: 'savings', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 3, movement_count: 0, subcategories: [{ id: 8, category_id: 4, name: 'Pensión' }, { id: 9, category_id: 4, name: 'Otros Ingresos' }] },
+  { id: 5, code: 'VAR', name: 'Varios y Ocio', icon: 'category', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 4, movement_count: 0, subcategories: [{ id: 10, category_id: 5, name: 'Transporte' }, { id: 11, category_id: 5, name: 'Ocio' }] },
 ];
 
 const movements = [
@@ -53,10 +53,17 @@ function parseBody(req) {
 }
 
 const routes = {
-  'GET /conta/api/categories.php': (req, res) => respond(res, categories),
+  'GET /conta/api/categories.php': (req, res) => respond(res, [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))),
   'POST /conta/api/categories.php': async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const data = await parseBody(req);
+    if (url.searchParams.get('_action') === 'reorder') {
+      for (const item of data.order || []) {
+        const idx = categories.findIndex(c => c.id === item.id);
+        if (idx !== -1) categories[idx] = { ...categories[idx], sort_order: item.sort_order ?? 0 };
+      }
+      return respond(res, { message: 'Orden actualizado' });
+    }
     if (url.searchParams.get('_method') === 'PUT') {
       const idx = categories.findIndex(c => c.id === data.id);
       if (idx === -1) return respond(res, { error: 'Categoría no encontrada' }, 404);
@@ -65,7 +72,7 @@ const routes = {
     }
     const { name, icon, color_bg, color_text } = data;
     const id = Math.max(...categories.map(c => c.id)) + 1;
-    const cat = { id, name, icon: icon || 'category', color_bg: color_bg || 'bg-primary-fixed', color_text: color_text || 'text-on-primary-fixed', movement_count: 0, subcategories: [] };
+    const cat = { id, name, icon: icon || 'category', color_bg: color_bg || 'bg-primary-fixed', color_text: color_text || 'text-on-primary-fixed', sort_order: Math.max(...categories.map(c => c.sort_order ?? 0), 0) + 1, movement_count: 0, subcategories: [] };
     categories.push(cat);
     respond(res, cat, 201);
   },

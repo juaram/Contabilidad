@@ -82,6 +82,13 @@ export async function deleteCategory(id: number): Promise<void> {
   await request(`categories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
+export async function reorderCategories(order: { id: number; sort_order: number }[]): Promise<{ message: string }> {
+  return request<{ message: string }>('categories.php?_action=reorder', {
+    method: 'POST',
+    body: JSON.stringify({ order }),
+  });
+}
+
 export async function createSubcategory(categoryId: number, name: string): Promise<{ id: number; category_id: number; name: string }> {
   return request('subcategories.php', {
     method: 'POST',

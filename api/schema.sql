@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS conta_categories (
     icon VARCHAR(255) NOT NULL DEFAULT 'category',
     color_bg VARCHAR(50) NOT NULL DEFAULT 'bg-primary-fixed',
     color_text VARCHAR(50) NOT NULL DEFAULT 'text-on-primary-fixed',
+    sort_order INT UNSIGNED NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

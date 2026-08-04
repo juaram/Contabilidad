@@ -24,6 +24,7 @@ export interface Category {
   icon: string;
   colorBgClass: string;
   colorTextClass: string;
+  sortOrder: number;
   subcategories: Subcategory[];
 }
 

@@ -14,6 +14,7 @@ interface AjustesViewProps {
   onOpenAddSubcategoryModal: (categoryName: string) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
   onDeleteCategory: (categoryId: string) => void;
+  onReorderCategories: (orderedIds: string[]) => void;
   onExportData: (type: 'pdf' | 'excel') => void;
   onImportData: () => void;
   onBackupData: () => void;
@@ -35,6 +36,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onOpenAddSubcategoryModal,
   onDeleteSubcategory,
   onDeleteCategory,
+  onReorderCategories,
   onExportData,
   onImportData,
   onBackupData,
@@ -52,12 +54,56 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   const [localTitle, setLocalTitle] = useState(preferences.appTitle);
   const [localSubtitle, setLocalSubtitle] = useState(preferences.appSubtitle);
   const [dirty, setDirty] = useState(false);
+  const [localCategories, setLocalCategories] = useState<Category[]>(categories);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
 
   useEffect(() => {
     setLocalTitle(preferences.appTitle);
     setLocalSubtitle(preferences.appSubtitle);
     setDirty(false);
   }, [preferences.appTitle, preferences.appSubtitle]);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+    try {
+      e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (overId !== id) setOverId(id);
+  };
+
+  const handleDragLeave = (id: string) => {
+    if (overId === id) setOverId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const fromId = e.dataTransfer.getData('text/plain') || draggedId;
+    setDraggedId(null);
+    setOverId(null);
+    if (!fromId || fromId === targetId) return;
+    const fromIdx = localCategories.findIndex((c) => c.id === fromId);
+    const toIdx = localCategories.findIndex((c) => c.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const next = [...localCategories];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    setLocalCategories(next);
+    onReorderCategories(next.map((c) => c.id));
+  };
 
   const handleSaveTextPrefs = () => {
     onUpdatePreferences({ appTitle: localTitle, appSubtitle: localSubtitle });
@@ -130,13 +176,36 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
               </div>
 
               {/* Category Items List */}
+              <div className="px-4 md:px-stack-md pt-3 flex items-center gap-2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
+                <span className="font-medium text-sm">
+                  Arrastra las categorías para ordenarlas. Este orden se aplica en presupuestos y desplegables.
+                </span>
+              </div>
               <div className="flex flex-col divide-y-2 divide-outline-variant">
-                {categories.map((cat) => {
+                {localCategories.map((cat) => {
                   const isExpanded = expandedCatIds.includes(cat.id);
+                  const isDragged = draggedId === cat.id;
+                  const isOver = overId === cat.id && draggedId !== null && draggedId !== cat.id;
 
                   return (
-                    <div key={cat.id} className="group">
-                      <div className="w-full flex items-center justify-between p-4 md:p-stack-md hover:bg-surface-container-low transition-colors">
+                    <div
+                      key={cat.id}
+                      className="group relative"
+                      onDragOver={(e) => handleDragOver(e, cat.id)}
+                      onDragLeave={() => handleDragLeave(cat.id)}
+                      onDrop={(e) => handleDrop(e, cat.id)}
+                    >
+                      {isOver && (
+                        <div className="absolute left-0 right-0 -top-px h-[3px] bg-primary rounded-full z-10" />
+                      )}
+                      <div
+                        className={`w-full flex items-center justify-between p-4 md:p-stack-md transition-colors ${
+                          isDragged
+                            ? 'opacity-40 bg-surface-container-low ring-2 ring-primary ring-inset'
+                            : 'hover:bg-surface-container-low'
+                        }`}
+                      >
                         <button
                           onClick={() => toggleCategoryExpand(cat.id)}
                           className="flex items-center gap-4 md:gap-6 text-left flex-1 cursor-pointer"
@@ -154,6 +223,15 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                           </div>
                         </button>
                         <div className="flex items-center gap-1 shrink-0">
+                          <span
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, cat.id)}
+                            onDragEnd={() => { setDraggedId(null); setOverId(null); }}
+                            title="Arrastrar para ordenar"
+                            className="p-2 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high cursor-grab active:cursor-grabbing select-none"
+                          >
+                            <span className="material-symbols-outlined text-[22px]">drag_indicator</span>
+                          </span>
                           <button
                             onClick={() => onOpenEditCategoryModal(cat)}
                             title="Editar categoría"
