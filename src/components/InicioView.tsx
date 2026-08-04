@@ -65,7 +65,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
       const date = new Date(m.date);
       const isAnteriorOpening =
         m.type === 'ingreso' &&
-        m.category.toLowerCase() === 'ingreso' &&
+        m.category.toLowerCase() === 'saldo' &&
         m.subcategory.toLowerCase() === 'anterior' &&
         date.getMonth() === 0 &&
         date.getDate() === 1;
