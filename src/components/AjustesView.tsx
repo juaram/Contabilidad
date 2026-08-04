@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Category, UserPreferences } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { MantenimientoMovimientos } from './MantenimientoMovimientos';
 
 interface AjustesViewProps {
   categories: Category[];
@@ -19,6 +20,8 @@ interface AjustesViewProps {
   onManageUsers: () => void;
   onOpenHelpModal: () => void;
   onChangePassword: () => void;
+  onToast: (msg: string) => void;
+  onMaintenanceApplied: () => void;
 }
 
 export const AjustesView: React.FC<AjustesViewProps> = ({
@@ -38,7 +41,10 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onManageUsers,
   onOpenHelpModal,
   onChangePassword,
+  onToast,
+  onMaintenanceApplied,
 }) => {
+  const [ajustesTab, setAjustesTab] = useState<'categorias' | 'mantenimiento'>('categorias');
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>(['cat-hogar', 'cat-alimentacion']);
   const [openPrefs, setOpenPrefs] = useState(false);
   const [openSecurity, setOpenSecurity] = useState(false);
@@ -65,8 +71,42 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
 
   return (
     <div className="flex flex-col w-full pb-16">
+      {/* Ajustes sub-tabs */}
+      <section className="px-4 md:px-margin-desktop pt-6">
+        <div className="max-w-[1100px] mx-auto w-full flex gap-2">
+          <button
+            onClick={() => setAjustesTab('categorias')}
+            className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
+              ajustesTab === 'categorias'
+                ? 'bg-primary text-on-primary shadow-sm'
+                : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined mr-2 text-[22px]">category</span>
+            <span>Categorías</span>
+          </button>
+          <button
+            onClick={() => setAjustesTab('mantenimiento')}
+            className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
+              ajustesTab === 'mantenimiento'
+                ? 'bg-primary text-on-primary shadow-sm'
+                : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined mr-2 text-[22px]">swap_vert</span>
+            <span>Mantenimiento de Movimientos</span>
+          </button>
+        </div>
+      </section>
 
-
+      {ajustesTab === 'mantenimiento' ? (
+        <section className="px-4 md:px-margin-desktop py-stack-lg">
+          <div className="max-w-[1100px] mx-auto w-full">
+            <MantenimientoMovimientos categories={categories} onToast={onToast} onApplied={onMaintenanceApplied} />
+          </div>
+        </section>
+      ) : (
+        <>
       {/* Main Settings Grid */}
       <section className="px-4 md:px-margin-desktop py-stack-lg">
         <div className="max-w-[1100px] mx-auto w-full grid grid-cols-12 gap-6">
@@ -396,6 +436,8 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
           </div>
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 };
