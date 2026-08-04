@@ -51,7 +51,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               ¿Cómo personalizar sus categorías?
             </h5>
             <p className="text-on-surface-variant text-base leading-relaxed">
-              En la pestaña <strong>Ajustes</strong>, en el panel de <strong>Gestión de Categorías</strong>, puede pulsar <strong>"+ Nueva"</strong> para añadir una clave principal, o desplegar una categoría existente para añadir o eliminar sus subcategorías. También puede editar cada categoría para cambiar su nombre, su icono (usando iconos rápidos o un enlace CDN de freeicon.com) y su color.
+              En la pestaña <strong>Ajustes</strong>, en el panel de <strong>Gestión de Categorías</strong>, puede pulsar <strong>"+ Nueva"</strong> para añadir una clave principal, o desplegar una categoría existente para añadir o eliminar sus subcategorías. También puede editar cada categoría para cambiar su nombre, su icono (eligiéndolo en la lista de iconos rápidos o pegando un enlace CDN de freeicon.com) y su color con un selector de color personalizado.
             </p>
           </div>
 

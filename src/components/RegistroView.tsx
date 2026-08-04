@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Budget, Category, Movement, UserPreferences } from '../types';
 import { actualForPeriod, budgetForPeriod } from '../budgetUtils';
 import { ConfirmarEliminarModal } from './ConfirmarEliminarModal';
+import { categoryColorStyle } from '../categoryColors';
 
 const formatAmount = (value: number): string => {
   const fixed = Math.abs(value).toFixed(2);
@@ -422,13 +423,16 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                           {(() => {
                             const movCat = categoryById.get(mov.category_id);
                             return (
-                              <span className={`px-2 py-1 rounded ${
-                                isSelected
-                                  ? 'bg-white/20 text-white'
-                                  : movCat
-                                    ? `${movCat.colorBgClass} ${movCat.colorTextClass}`
-                                    : 'bg-surface-container-high text-on-surface-variant'
-                              }`}>
+                              <span
+                                className={`px-2 py-1 rounded ${
+                                  isSelected
+                                    ? 'bg-white/20 text-white'
+                                    : movCat
+                                      ? ''
+                                      : 'bg-surface-container-high text-on-surface-variant'
+                                }`}
+                                style={movCat && !isSelected ? categoryColorStyle(movCat.colorBgClass, movCat.colorTextClass) : undefined}
+                              >
                                 {mov.category}
                               </span>
                             );

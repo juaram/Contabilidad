@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Category } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import {
+  categoryBackgroundColor,
+  categoryColorStyle,
+  categoryTextColor,
+  contrastTextColor,
+  DEFAULT_CATEGORY_BG,
+  DEFAULT_CATEGORY_TEXT,
+  isHexColor,
+} from '../categoryColors';
 
 interface NuevaCategoriaModalProps {
   isOpen: boolean;
@@ -11,17 +20,6 @@ interface NuevaCategoriaModalProps {
   onSaveCategory: (name: string, icon: string, colorBgClass: string, colorTextClass: string) => void;
   onSaveSubcategory: (parentName: string, subcategoryName: string) => void;
 }
-
-const COLOR_OPTIONS = [
-  { name: 'Azul', bg: 'bg-primary-fixed', text: 'text-on-primary-fixed' },
-  { name: 'Verde', bg: 'bg-secondary-fixed', text: 'text-on-secondary-fixed' },
-  { name: 'Rosa', bg: 'bg-tertiary-fixed', text: 'text-on-tertiary-fixed' },
-  { name: 'Azul oscuro', bg: 'bg-primary-container', text: 'text-on-primary-container' },
-  { name: 'Verde intenso', bg: 'bg-secondary-container', text: 'text-on-secondary-container' },
-  { name: 'Rojo', bg: 'bg-error-container', text: 'text-on-error-container' },
-  { name: 'Neutro', bg: 'bg-surface-variant', text: 'text-on-surface-variant' },
-  { name: 'Oscuro', bg: 'bg-inverse-surface', text: 'text-inverse-on-surface' },
-];
 
 const PRESET_ICONS = [
   { name: 'Categoría General', value: 'category' },
@@ -41,9 +39,6 @@ const PRESET_ICONS = [
   { name: 'Energía / Servicios', value: 'electric_bolt' },
 ];
 
-const DEFAULT_BG = 'bg-primary-fixed';
-const DEFAULT_TEXT = 'text-on-primary-fixed';
-
 const isUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
 export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
@@ -60,8 +55,8 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('category');
   const [iconUrl, setIconUrl] = useState('');
-  const [colorBg, setColorBg] = useState(DEFAULT_BG);
-  const [colorText, setColorText] = useState(DEFAULT_TEXT);
+  const [color, setColor] = useState(DEFAULT_CATEGORY_BG);
+  const [colorText, setColorText] = useState(DEFAULT_CATEGORY_TEXT);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,14 +66,14 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
       const url = isUrl(editingCategory.icon);
       setIcon(url ? 'category' : editingCategory.icon);
       setIconUrl(url ? editingCategory.icon : '');
-      setColorBg(editingCategory.colorBgClass);
-      setColorText(editingCategory.colorTextClass);
+      setColor(categoryBackgroundColor(editingCategory.colorBgClass));
+      setColorText(categoryTextColor(editingCategory.colorBgClass, editingCategory.colorTextClass));
     } else {
       setName('');
       setIcon('category');
       setIconUrl('');
-      setColorBg(DEFAULT_BG);
-      setColorText(DEFAULT_TEXT);
+      setColor(DEFAULT_CATEGORY_BG);
+      setColorText(DEFAULT_CATEGORY_TEXT);
     }
   }, [isOpen, isEditing, editingCategory]);
 
@@ -86,12 +81,17 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
 
   const effectiveIcon = iconUrl.trim() !== '' ? iconUrl.trim() : icon;
 
+  const handleColorChange = (hex: string) => {
+    setColor(hex);
+    setColorText(contrastTextColor(hex));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     if (isEditing || mode === 'category') {
-      onSaveCategory(name.trim(), effectiveIcon, colorBg, colorText);
+      onSaveCategory(name.trim(), effectiveIcon, color, colorText);
     } else {
       onSaveSubcategory(parentCategoryName, name.trim());
     }
@@ -140,26 +140,25 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
             <>
               <div className="space-y-1">
                 <label className="block font-semibold text-base text-on-surface">Iconos rápidos</label>
-                <div className="grid grid-cols-6 gap-2">
-                  {PRESET_ICONS.map((preset) => {
-                    const selected = iconUrl.trim() === '' && icon === preset.value;
-                    return (
-                      <button
-                        type="button"
-                        key={preset.value}
-                        title={preset.name}
-                        onClick={() => {
-                          setIcon(preset.value);
-                          setIconUrl('');
-                        }}
-                        className={`aspect-square rounded-lg flex items-center justify-center border-2 transition-all cursor-pointer bg-surface text-on-surface hover:bg-surface-container-low ${
-                          selected ? 'border-primary' : 'border-outline-variant'
-                        }`}
-                      >
-                        <CategoryIcon icon={preset.value} className="text-[20px]" imgClassName="w-5 h-5" />
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center gap-3 bg-surface border-2 border-outline-variant rounded-xl px-4 focus-within:border-primary transition-colors">
+                  <CategoryIcon icon={icon} className="text-[22px] shrink-0" imgClassName="w-5 h-5" />
+                  <select
+                    value={icon}
+                    onChange={(e) => {
+                      setIcon(e.target.value);
+                      setIconUrl('');
+                    }}
+                    className="w-full h-14 bg-transparent outline-none font-medium text-lg cursor-pointer text-on-surface"
+                  >
+                    {!PRESET_ICONS.some((p) => p.value === icon) && (
+                      <option value={icon}>Icono actual</option>
+                    )}
+                    {PRESET_ICONS.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -181,33 +180,33 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
 
               <div className="space-y-1">
                 <label className="block font-semibold text-base text-on-surface">Color</label>
-                <div className="grid grid-cols-8 gap-2">
-                  {COLOR_OPTIONS.map((opt) => {
-                    const selected = colorBg === opt.bg && colorText === opt.text;
-                    return (
-                      <button
-                        type="button"
-                        key={opt.bg}
-                        title={opt.name}
-                        onClick={() => {
-                          setColorBg(opt.bg);
-                          setColorText(opt.text);
-                        }}
-                        className={`w-full aspect-square rounded-full flex items-center justify-center transition-all cursor-pointer ${opt.bg} ${opt.text} ${
-                          selected
-                            ? 'ring-4 ring-primary scale-110'
-                            : 'ring-1 ring-outline-variant hover:scale-110'
-                        }`}
-                      >
-                        <CategoryIcon icon={effectiveIcon} className="text-[20px]" imgClassName="w-5 h-5" />
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border-2 border-outline-variant">
+                  <input
+                    type="color"
+                    value={isHexColor(color) ? color : DEFAULT_CATEGORY_BG}
+                    onChange={(e) => handleColorChange(e.target.value)}
+                    className="w-14 h-14 shrink-0 rounded-lg border-2 border-outline-variant cursor-pointer bg-transparent"
+                  />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="font-semibold text-base text-on-surface">Color de fondo</span>
+                    <span className="font-mono font-medium text-sm text-on-surface-variant uppercase">
+                      {isHexColor(color) ? color : DEFAULT_CATEGORY_BG}
+                    </span>
+                  </div>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: isHexColor(color) ? color : DEFAULT_CATEGORY_BG, color: colorText }}
+                  >
+                    <CategoryIcon icon={effectiveIcon} className="text-[22px]" imgClassName="w-5 h-5" />
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border-2 border-outline-variant">
-                <div className={`w-14 h-14 rounded-full ${colorBg} ${colorText} flex items-center justify-center shrink-0`}>
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
+                  style={categoryColorStyle(color, colorText)}
+                >
                   <CategoryIcon icon={effectiveIcon} className="text-[28px]" imgClassName="w-7 h-7" />
                 </div>
                 <div className="flex flex-col">

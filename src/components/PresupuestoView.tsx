@@ -3,6 +3,7 @@ import { Budget, BudgetType, Category, Movement, UserPreferences } from '../type
 import { actualForPeriod } from '../budgetUtils';
 import { NuevoPresupuestoModal } from './NuevoPresupuestoModal';
 import { CategoryIcon } from './CategoryIcon';
+import { categoryColorStyle } from '../categoryColors';
 
 interface PresupuestoViewProps {
   budgets: Budget[];
@@ -327,7 +328,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
                   onClick={() => toggleCategory(agg.category.id)}
                   className="w-full bg-surface-container-high px-4 md:px-6 py-4 flex items-center gap-4 border-b-2 border-outline-variant text-left cursor-pointer hover:bg-surface-container-highest transition-colors"
                 >
-                  <div className={`w-11 h-11 rounded-full ${agg.category.colorBgClass} ${agg.category.colorTextClass} flex items-center justify-center shrink-0`}>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={categoryColorStyle(agg.category.colorBgClass, agg.category.colorTextClass)}>
                     <CategoryIcon icon={agg.category.icon} className="text-[24px]" imgClassName="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">

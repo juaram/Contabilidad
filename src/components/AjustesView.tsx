@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Category, UserPreferences } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { categoryColorStyle } from '../categoryColors';
 
 interface AjustesViewProps {
   categories: Category[];
@@ -98,7 +99,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                           onClick={() => toggleCategoryExpand(cat.id)}
                           className="flex items-center gap-4 md:gap-6 text-left flex-1 cursor-pointer"
                         >
-                          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full ${cat.colorBgClass} ${cat.colorTextClass} flex items-center justify-center shrink-0`}>
+                          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0" style={categoryColorStyle(cat.colorBgClass, cat.colorTextClass)}>
                             <CategoryIcon icon={cat.icon} className="text-[28px] md:text-[32px]" imgClassName="w-7 h-7 md:w-8 md:h-8" />
                           </div>
                           <div>
