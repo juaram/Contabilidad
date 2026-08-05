@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Category, UserPreferences } from '../types';
+import { Category, Movement, UserPreferences } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { categoryColorStyle } from '../categoryColors';
 import { MantenimientoMovimientos } from './MantenimientoMovimientos';
+import { CorreccionOrtografica } from './CorreccionOrtografica';
 
 interface AjustesViewProps {
   categories: Category[];
+  movements: Movement[];
   preferences: UserPreferences;
   username: string;
   onUpdatePreferences: (updated: Partial<UserPreferences>) => void;
@@ -26,8 +28,19 @@ interface AjustesViewProps {
   onMaintenanceApplied: () => void;
 }
 
+type AjustesTab = 'categorias' | 'mantenimiento' | 'preferencias' | 'seguridad' | 'ayuda';
+
+const TABS: { id: AjustesTab; icon: string; label: string }[] = [
+  { id: 'categorias', icon: 'category', label: 'Categorías' },
+  { id: 'mantenimiento', icon: 'swap_vert', label: 'Movimientos' },
+  { id: 'preferencias', icon: 'settings', label: 'Preferencias Generales' },
+  { id: 'seguridad', icon: 'database', label: 'Seguridad y Datos' },
+  { id: 'ayuda', icon: 'help', label: 'Info/Ayuda' },
+];
+
 export const AjustesView: React.FC<AjustesViewProps> = ({
   categories,
+  movements,
   preferences,
   username,
   onUpdatePreferences,
@@ -47,10 +60,8 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onToast,
   onMaintenanceApplied,
 }) => {
-  const [ajustesTab, setAjustesTab] = useState<'categorias' | 'mantenimiento'>('categorias');
+  const [ajustesTab, setAjustesTab] = useState<AjustesTab>('categorias');
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>(['cat-hogar', 'cat-alimentacion']);
-  const [openPrefs, setOpenPrefs] = useState(false);
-  const [openSecurity, setOpenSecurity] = useState(false);
   const [localTitle, setLocalTitle] = useState(preferences.appTitle);
   const [localSubtitle, setLocalSubtitle] = useState(preferences.appSubtitle);
   const [dirty, setDirty] = useState(false);
@@ -120,45 +131,242 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
     <div className="flex flex-col w-full pb-16">
       {/* Ajustes sub-tabs */}
       <section className="px-4 md:px-margin-desktop pt-6">
-        <div className="max-w-[1100px] mx-auto w-full flex gap-2">
-          <button
-            onClick={() => setAjustesTab('categorias')}
-            className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
-              ajustesTab === 'categorias'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 text-[22px]">category</span>
-            <span>Categorías</span>
-          </button>
-          <button
-            onClick={() => setAjustesTab('mantenimiento')}
-            className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
-              ajustesTab === 'mantenimiento'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 text-[22px]">swap_vert</span>
-            <span>Mantenimiento de Movimientos</span>
-          </button>
+        <div className="max-w-275 mx-auto w-full flex flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setAjustesTab(tab.id)}
+              className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
+                ajustesTab === tab.id
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 text-[22px]">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
       </section>
 
       {ajustesTab === 'mantenimiento' ? (
         <section className="px-4 md:px-margin-desktop py-stack-lg">
-          <div className="max-w-[1100px] mx-auto w-full">
+          <div className="max-w-275 mx-auto w-full flex flex-col gap-6">
             <MantenimientoMovimientos categories={categories} onToast={onToast} onApplied={onMaintenanceApplied} />
+            <CorreccionOrtografica movements={movements} onToast={onToast} onApplied={onMaintenanceApplied} />
+          </div>
+        </section>
+      ) : ajustesTab === 'preferencias' ? (
+        <section className="px-4 md:px-margin-desktop py-stack-lg">
+          <div className="max-w-275 mx-auto w-full">
+            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between">
+                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">settings</span>
+                  <span>Preferencias Generales</span>
+                </h3>
+              </div>
+
+              <div className="p-4 md:p-stack-md flex flex-col gap-6">
+                {/* Currency */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-base text-on-surface-variant">Moneda principal</label>
+                  <select
+                    value={preferences.currency}
+                    onChange={(e) => onUpdatePreferences({ currency: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
+                  >
+                    <option>Euro (€) - EUR</option>
+                    <option>Dólar ($) - USD</option>
+                    <option>Libra (£) - GBP</option>
+                  </select>
+                </div>
+
+                {/* Date Format */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-base text-on-surface-variant">Formato de Fecha</label>
+                  <select
+                    value={preferences.dateFormat}
+                    onChange={(e) => onUpdatePreferences({ dateFormat: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
+                  >
+                    <option>DD / MM / AAAA (31/12/2024)</option>
+                    <option>DD de Mes de AAAA</option>
+                  </select>
+                </div>
+
+                {/* Registro List Font */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-base text-on-surface-variant">Fuente del listado de Registro</label>
+                  <select
+                    value={preferences.listFont}
+                    onChange={(e) => onUpdatePreferences({ listFont: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
+                  >
+                    <option value="sans">Inter (actual)</option>
+                    <option value="code">Camingo Code</option>
+                  </select>
+                </div>
+
+                {/* High Contrast Toggle */}
+                <div className="flex items-center justify-between py-2 border-t border-outline-variant/60">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-base text-on-surface">Alto Contraste</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Mejora la visibilidad del texto</span>
+                  </div>
+                  <button
+                    onClick={() => onUpdatePreferences({ highContrast: !preferences.highContrast })}
+                    className={`w-16 h-8 rounded-full relative transition-colors duration-300 cursor-pointer ${
+                      preferences.highContrast ? 'bg-secondary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
+                        preferences.highContrast ? 'translate-x-8' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* App Title */}
+                <div className="flex flex-col gap-2 border-t border-outline-variant/60 pt-4">
+                  <label className="font-semibold text-base text-on-surface-variant">Título de la aplicación</label>
+                  <input
+                    type="text"
+                    value={localTitle}
+                    onChange={(e) => { setLocalTitle(e.target.value); setDirty(true); }}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
+                  />
+                </div>
+
+                {/* App Subtitle */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-base text-on-surface-variant">Subtítulo de la aplicación</label>
+                  <input
+                    type="text"
+                    value={localSubtitle}
+                    onChange={(e) => { setLocalSubtitle(e.target.value); setDirty(true); }}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
+                  />
+                </div>
+
+                {dirty && (
+                  <button
+                    onClick={handleSaveTextPrefs}
+                    className="w-full h-12 bg-primary text-on-primary font-bold rounded-xl hover:bg-primary-container transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">save</span>
+                    Guardar cambios
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : ajustesTab === 'seguridad' ? (
+        <section className="px-4 md:px-margin-desktop py-stack-lg">
+          <div className="max-w-275 mx-auto w-full">
+            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between">
+                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">database</span>
+                  <span>Seguridad y Datos</span>
+                </h3>
+              </div>
+
+              <div className="p-4 md:p-stack-md grid grid-cols-1 gap-4">
+                <button
+                  onClick={onManageUsers}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">manage_accounts</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Gestión de Usuarios</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Crear, editar y eliminar usuarios</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={onChangePassword}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">lock</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Cambiar Contraseña</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Actualizar la contraseña de acceso</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={onImportData}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">upload_file</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Importar Datos</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Subir archivo CSV (separador ;)</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onExportData('excel')}
+                  className="flex items-center gap-4 p-4 border-2 border-primary rounded-xl hover:bg-primary/5 transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-primary text-[32px]">file_download</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-primary">Exportar Datos</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Descargar CSV (separador ;)</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={onBackupData}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">cloud_upload</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Copia de Seguridad</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Guardar estado actual</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={onRestoreData}
+                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">settings_backup_restore</span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-base text-on-surface">Restaurar Copia de Seguridad</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Recuperar estado desde un archivo</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : ajustesTab === 'ayuda' ? (
+        <section className="px-4 md:px-margin-desktop py-stack-lg">
+          <div className="max-w-275 mx-auto w-full">
+            <div className="bg-surface-container-low p-stack-md rounded-xl border-2 border-outline-variant flex flex-col items-center gap-4 text-center shadow-sm">
+              <div className="flex flex-col">
+                <span className="font-bold text-lg text-on-surface">Mis Cuentas v2.4.0</span>
+                <span className="font-medium text-sm text-on-surface-variant">Última actualización: Hoy, 09:30</span>
+              </div>
+              <button
+                onClick={onOpenHelpModal}
+                className="w-full bg-white border-2 border-primary text-primary font-semibold text-base h-14 flex items-center justify-center gap-2 rounded-xl hover:bg-primary hover:text-white transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined">help</span>
+                <span>Centro de Ayuda</span>
+              </button>
+            </div>
           </div>
         </section>
       ) : (
         <>
       {/* Main Settings Grid */}
       <section className="px-4 md:px-margin-desktop py-stack-lg">
-        <div className="max-w-[1100px] mx-auto w-full grid grid-cols-12 gap-6">
-          {/* LEFT COLUMN: Categories Management */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
+        <div className="max-w-275 mx-auto w-full">
             <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
               <div className="bg-primary p-4 md:p-stack-md flex items-center justify-between text-on-primary">
                 <div className="flex items-center gap-3">
@@ -197,7 +405,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                       onDrop={(e) => handleDrop(e, cat.id)}
                     >
                       {isOver && (
-                        <div className="absolute left-0 right-0 -top-px h-[3px] bg-primary rounded-full z-10" />
+                        <div className="absolute left-0 right-0 -top-px h-0.75 bg-primary rounded-full z-10" />
                       )}
                       <div
                         className={`w-full flex items-center justify-between p-4 md:p-stack-md transition-colors ${
@@ -301,218 +509,6 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                 })}
               </div>
             </div>
-          </div>
-
-          {/* RIGHT COLUMN: Preferences, Security & Help */}
-          <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
-            {/* General Preferences */}
-            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
-              <button
-                onClick={() => setOpenPrefs((prev) => !prev)}
-                className="w-full bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between hover:bg-surface-container-highest transition-colors cursor-pointer text-left"
-              >
-                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">settings</span>
-                  <span>Preferencias Generales</span>
-                </h3>
-                <span
-                  className={`material-symbols-outlined text-primary text-[32px] transition-transform duration-300 ${
-                    openPrefs ? 'rotate-180' : ''
-                  }`}
-                >
-                  expand_more
-                </span>
-              </button>
-
-              {openPrefs && (
-                <div className="p-4 md:p-stack-md flex flex-col gap-6">
-                {/* Currency */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-semibold text-base text-on-surface-variant">Moneda principal</label>
-                  <select
-                    value={preferences.currency}
-                    onChange={(e) => onUpdatePreferences({ currency: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option>Euro (€) - EUR</option>
-                    <option>Dólar ($) - USD</option>
-                    <option>Libra (£) - GBP</option>
-                  </select>
-                </div>
-
-                {/* Date Format */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-semibold text-base text-on-surface-variant">Formato de Fecha</label>
-                  <select
-                    value={preferences.dateFormat}
-                    onChange={(e) => onUpdatePreferences({ dateFormat: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option>DD / MM / AAAA (31/12/2024)</option>
-                    <option>DD de Mes de AAAA</option>
-                  </select>
-                </div>
-
-                {/* High Contrast Toggle */}
-                <div className="flex items-center justify-between py-2 border-t border-outline-variant/60">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-base text-on-surface">Alto Contraste</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Mejora la visibilidad del texto</span>
-                  </div>
-                  <button
-                    onClick={() => onUpdatePreferences({ highContrast: !preferences.highContrast })}
-                    className={`w-16 h-8 rounded-full relative transition-colors duration-300 cursor-pointer ${
-                      preferences.highContrast ? 'bg-secondary' : 'bg-outline-variant'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
-                        preferences.highContrast ? 'translate-x-8' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* App Title */}
-                <div className="flex flex-col gap-2 border-t border-outline-variant/60 pt-4">
-                  <label className="font-semibold text-base text-on-surface-variant">Título de la aplicación</label>
-                  <input
-                    type="text"
-                    value={localTitle}
-                    onChange={(e) => { setLocalTitle(e.target.value); setDirty(true); }}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
-                  />
-                </div>
-
-                {/* App Subtitle */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-semibold text-base text-on-surface-variant">Subtítulo de la aplicación</label>
-                  <input
-                    type="text"
-                    value={localSubtitle}
-                    onChange={(e) => { setLocalSubtitle(e.target.value); setDirty(true); }}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none"
-                  />
-                </div>
-
-                {dirty && (
-                  <button
-                    onClick={handleSaveTextPrefs}
-                    className="w-full h-12 bg-primary text-on-primary font-bold rounded-xl hover:bg-primary-container transition-colors cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined">save</span>
-                    Guardar cambios
-                  </button>
-                )}
-                </div>
-              )}
-            </div>
-
-            {/* Security & Data */}
-            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
-              <button
-                onClick={() => setOpenSecurity((prev) => !prev)}
-                className="w-full bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between hover:bg-surface-container-highest transition-colors cursor-pointer text-left"
-              >
-                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">database</span>
-                  <span>Seguridad y Datos</span>
-                </h3>
-                <span
-                  className={`material-symbols-outlined text-primary text-[32px] transition-transform duration-300 ${
-                    openSecurity ? 'rotate-180' : ''
-                  }`}
-                >
-                  expand_more
-                </span>
-              </button>
-
-              {openSecurity && (
-                <div className="p-4 md:p-stack-md grid grid-cols-1 gap-4">
-                <button
-                  onClick={onManageUsers}
-                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">manage_accounts</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-on-surface">Gestión de Usuarios</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Crear, editar y eliminar usuarios</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={onChangePassword}
-                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">lock</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-on-surface">Cambiar Contraseña</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Actualizar la contraseña de acceso</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={onImportData}
-                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">upload_file</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-on-surface">Importar Datos</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Subir archivo CSV (separador ;)</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => onExportData('excel')}
-                  className="flex items-center gap-4 p-4 border-2 border-primary rounded-xl hover:bg-primary/5 transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-primary text-[32px]">file_download</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-primary">Exportar Datos</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Descargar CSV (separador ;)</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={onBackupData}
-                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">cloud_upload</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-on-surface">Copia de Seguridad</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Guardar estado actual</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={onRestoreData}
-                  className="flex items-center gap-4 p-4 border-2 border-outline rounded-xl hover:bg-surface-container-low transition-colors text-left cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">settings_backup_restore</span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-on-surface">Restaurar Copia de Seguridad</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Recuperar estado desde un archivo</span>
-                  </div>
-                </button>
-                </div>
-              )}
-            </div>
-
-            {/* App Info & Help */}
-            <div className="bg-surface-container-low p-stack-md rounded-xl border-2 border-outline-variant flex flex-col items-center gap-4 text-center shadow-sm">
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-on-surface">Mis Cuentas v2.4.0</span>
-                <span className="font-medium text-sm text-on-surface-variant">Última actualización: Hoy, 09:30</span>
-              </div>
-              <button
-                onClick={onOpenHelpModal}
-                className="w-full bg-white border-2 border-primary text-primary font-semibold text-base h-14 flex items-center justify-center gap-2 rounded-xl hover:bg-primary hover:text-white transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined">help</span>
-                <span>Centro de Ayuda</span>
-              </button>
-            </div>
-          </div>
         </div>
       </section>
         </>

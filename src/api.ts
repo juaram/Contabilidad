@@ -279,3 +279,26 @@ export async function updateBudget(id: number, data: BudgetPayload): Promise<Bud
 export async function deleteBudget(id: number): Promise<{ message: string }> {
   return request(`budgets.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
+
+export async function fetchDictionaryWords(): Promise<string[]> {
+  const res = await request<{ words: string[] }>('spellcheck.php?action=dict');
+  return res.words || [];
+}
+
+export async function addDictionaryWord(word: string): Promise<void> {
+  await request('spellcheck.php?action=add_word', {
+    method: 'POST',
+    body: JSON.stringify({ word }),
+  });
+}
+
+export async function replaceSpelling(data: {
+  word: string;
+  replacement: string;
+  movement_id?: number;
+}): Promise<{ updated: number }> {
+  return request('spellcheck.php?action=replace', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}

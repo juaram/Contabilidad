@@ -3,13 +3,17 @@ import { Budget, BudgetType, Movement } from './types';
 /**
  * Presupuesto efectivo de cada mes del año para un tipo dado.
  * Modelo aditivo: los presupuestos recurrentes (month='00') se suman a todos los meses;
- * los de mes concreto se suman solo a ese mes.
+ * los de mes concreto se suman solo a ese mes; los anuales (month='13') reparten su importe
+ * total entre los 12 meses.
  */
 export function monthlyBudgetsForYear(budgets: Budget[], year: number, type: BudgetType): number[] {
   const result = new Array<number>(12).fill(0);
   for (const b of budgets) {
     if (b.year !== year || b.type !== type) continue;
-    if (b.month === '00') {
+    if (b.month === '13') {
+      const monthly = b.amount / 12;
+      for (let i = 0; i < 12; i++) result[i] += monthly;
+    } else if (b.month === '00') {
       for (let i = 0; i < 12; i++) result[i] += b.amount;
     } else {
       const idx = parseInt(b.month, 10) - 1;
@@ -78,7 +82,7 @@ export function suggestBudgetAmount(
   }
   if (count === 0 || total === 0) return 0;
   const avgYear = total / count;
-  const isMonthly = month !== '00' && month !== 'todos' && month !== '';
+  const isMonthly = month !== '00' && month !== 'todos' && month !== '' && month !== '13';
   return isMonthly ? avgYear / 12 : avgYear;
 }
 

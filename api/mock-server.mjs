@@ -264,6 +264,41 @@ const routes = {
     }
     respond(res, { preview: false, updated: matches.length });
   },
+  'GET /conta/api/spellcheck.php': (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    if (url.searchParams.get('action') === 'dict') {
+      return respond(res, { words: [] });
+    }
+    return respond(res, { error: 'Acción no válida' }, 400);
+  },
+  'POST /conta/api/spellcheck.php': async (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const action = url.searchParams.get('action');
+    const data = await parseBody(req);
+    if (action === 'add_word') {
+      return respond(res, { message: 'Palabra añadida al diccionario' });
+    }
+    if (action === 'replace') {
+      const { word, replacement, movement_id } = data;
+      const target = movement_id ? movements.filter(m => m.id === movement_id) : movements;
+      const re = new RegExp(`(?<![\\p{L}\\p{N}])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'giu');
+      const applyCase = (orig) => {
+        if (orig === orig.toUpperCase()) return replacement.toUpperCase();
+        if (orig === orig.charAt(0).toUpperCase() + orig.slice(1).toLowerCase()) {
+          return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+        }
+        return replacement.toLowerCase();
+      };
+      let updated = 0;
+      for (const m of target) {
+        const before = m.description;
+        m.description = before.replace(re, applyCase);
+        if (m.description !== before) updated++;
+      }
+      return respond(res, { updated });
+    }
+    return respond(res, { error: 'Acción no válida' }, 400);
+  },
 };
 
 const server = http.createServer((req, res) => {

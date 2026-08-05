@@ -126,7 +126,7 @@ function createBudget(): void
     if ($year <= 0) {
         jsonError('El año es obligatorio');
     }
-    if ($month === '' || (strlen($month) === 2 && ($month < '00' || $month > '12'))) {
+    if ($month === '' || (strlen($month) === 2 && ($month < '00' || $month > '13'))) {
         jsonError('El mes no es válido');
     }
     if ($amount < 0) {
@@ -196,7 +196,7 @@ function updateBudget(): void
     if ($year <= 0) {
         jsonError('El año es obligatorio');
     }
-    if ($month === '' || (strlen($month) === 2 && ($month < '00' || $month > '12'))) {
+    if ($month === '' || (strlen($month) === 2 && ($month < '00' || $month > '13'))) {
         jsonError('El mes no es válido');
     }
     if ($amount < 0) {

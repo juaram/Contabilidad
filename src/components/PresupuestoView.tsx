@@ -54,7 +54,9 @@ function effectiveSubBudget(budgets: Budget[], year: number, month: string, type
   const isAnnual = month === 'todos' || month === '' || month === '00';
   let total = 0;
   for (const b of relevant) {
-    if (b.month === '00') {
+    if (b.month === '13') {
+      total += isAnnual ? b.amount : b.amount / 12;
+    } else if (b.month === '00') {
       total += isAnnual ? b.amount * 12 : b.amount;
     } else {
       const idx = parseInt(b.month, 10) - 1;
@@ -66,9 +68,11 @@ function effectiveSubBudget(budgets: Budget[], year: number, month: string, type
 
 function periodLabel(budgetRows: Budget[]): string {
   const rec = budgetRows.some((b) => b.month === '00');
-  const spec = budgetRows.filter((b) => b.month !== '00');
+  const anual = budgetRows.some((b) => b.month === '13');
+  const spec = budgetRows.filter((b) => b.month !== '00' && b.month !== '13');
   const parts: string[] = [];
   if (rec) parts.push('Recurrente');
+  if (anual) parts.push('Anual');
   if (spec.length > 0) parts.push(spec.map((b) => MONTH_NAMES[parseInt(b.month, 10) - 1]).join(', '));
   return parts.join(' + ') || '—';
 }
@@ -131,8 +135,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
 
   const categoryAggs = useMemo<CategoryAgg[]>(() => {
     return categories.map((cat) => {
-      const rows: SubRow[] = [];
-      const push = (subcategoryId: string | null, label: string, subName?: string) => {
+      const makeRow = (subcategoryId: string | null, label: string, subName?: string): SubRow | null => {
         const budgetRows = budgets.filter(
           (b) =>
             b.year === selectedYear &&
@@ -143,7 +146,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
         const budgeted = effectiveSubBudget(budgets, selectedYear, selectedMonth, selectedType, cat.id, subcategoryId);
         const actual = actualForPeriod(movements, selectedYear, selectedMonth, selectedType, cat.id, subName);
         if (budgeted > 0 || actual > 0 || budgetRows.length > 0) {
-          rows.push({
+          return {
             key: subcategoryId ?? 'cat',
             label,
             subcategoryId,
@@ -151,12 +154,48 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
             actual,
             budgetRows,
             hasBudget: budgetRows.length > 0,
-          });
+          };
         }
+        return null;
       };
 
-      push(null, 'Toda la categoría');
-      cat.subcategories.forEach((s) => push(s.id, s.name, s.name));
+      const subRows = cat.subcategories
+        .map((s) => makeRow(s.id, s.name, s.name))
+        .filter((r): r is SubRow => r !== null);
+      const hasSubs = cat.subcategories.length > 0;
+
+      // Categoría con subcategorías: el item "Toda la categoría" solo agrega
+      // el importe real de las subcategorías SIN presupuesto informado, evitando
+      // duplicar en la cabecera el total de las que sí tienen presupuesto.
+      let rows: SubRow[];
+      if (hasSubs) {
+        const catBudgetRows = budgets.filter(
+          (b) =>
+            b.year === selectedYear &&
+            b.type === selectedType &&
+            b.category_id === cat.id &&
+            (b.subcategory_id ?? null) === null,
+        );
+        const unbudgetedRows = subRows.filter((r) => !r.hasBudget);
+        const catRow =
+          catBudgetRows.length > 0
+            ? makeRow(null, 'Toda la categoría')
+            : unbudgetedRows.length > 0
+              ? {
+                  key: 'cat',
+                  label: 'Toda la categoría',
+                  subcategoryId: null,
+                  budgeted: 0,
+                  actual: unbudgetedRows.reduce((s, r) => s + r.actual, 0),
+                  budgetRows: [],
+                  hasBudget: false,
+                }
+              : null;
+        rows = catRow ? [catRow] : [];
+        rows = rows.concat(subRows.filter((r) => r.hasBudget));
+      } else {
+        rows = makeRow(null, 'Toda la categoría') ? [makeRow(null, 'Toda la categoría')!] : [];
+      }
 
       return {
         category: cat,
@@ -376,7 +415,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
                             style={{ width: `${Math.min(row.budgeted > 0 ? (row.actual / row.budgeted) * 100 : 0, 100)}%` }}
                           />
                         </div>
-                        <div className="flex justify-between mt-1 text-xs font-medium text-on-surface-variant">
+                        <div className="flex justify-between mt-1 text-sm font-medium text-on-surface-variant">
                           <span>Real: {formatAmount(row.actual)} {currencySymbol}</span>
                           <span>{row.budgeted > 0 ? `${((row.actual / row.budgeted) * 100).toFixed(0)}%` : ''}</span>
                           <span>Previsto: {formatAmount(row.budgeted)} {currencySymbol}</span>

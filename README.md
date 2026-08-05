@@ -35,9 +35,14 @@ Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu`, luego `npm run dev
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Servidor de desarrollo Vite |
-| `npm run build` | Build de producción en `dist/` |
+| `npm run build` | Build de producción en `dist/`. Además copia la carpeta `api/` dentro de `dist/api/` |
 | `npm run preview` | Previsualizar build |
 | `npm run lint` | TypeScript type-checking |
+
+> **Build:** `npm run build` ejecuta `vite build` y después `node scripts/copy-api.mjs`,
+> que copia todos los archivos de `api/` (endpoints PHP + `schema.sql`) a `dist/api/`.
+> `mock-server.mjs` se excluye por ser solo para desarrollo. El resultado de `dist/` es
+> autocontenido (frontend + backend) y listo para subir a producción.
 
 ## Despliegue en Hostalia
 
@@ -45,7 +50,7 @@ Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu`, luego `npm run dev
 npm run build
 ```
 
-Subir `dist/` a `public_html/conta/` y la carpeta `api/` a `public_html/conta/api/`. Ejecutar `api/schema.sql` en la base de datos.
+Subir `dist/` a `public_html/conta/` (ya incluye `dist/api/` con los endpoints PHP y el `schema.sql`). Ejecutar `api/schema.sql` en la base de datos.
 
 **Nota:** Hostalia no soporta los verbos HTTP `PUT` ni `DELETE`. Los endpoints usan `POST` con `_method=DELETE` donde es necesario.
 

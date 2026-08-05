@@ -47,7 +47,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl w-full max-w-md overflow-hidden shadow-2xl">
         <div className="bg-primary p-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-3">

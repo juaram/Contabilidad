@@ -21,21 +21,6 @@ interface NuevoPresupuestoModalProps {
   }) => void;
 }
 
-const MONTHS = [
-  { value: '01', name: 'Enero' },
-  { value: '02', name: 'Febrero' },
-  { value: '03', name: 'Marzo' },
-  { value: '04', name: 'Abril' },
-  { value: '05', name: 'Mayo' },
-  { value: '06', name: 'Junio' },
-  { value: '07', name: 'Julio' },
-  { value: '08', name: 'Agosto' },
-  { value: '09', name: 'Septiembre' },
-  { value: '10', name: 'Octubre' },
-  { value: '11', name: 'Noviembre' },
-  { value: '12', name: 'Diciembre' },
-];
-
 function parseAmount(value: string): number {
   const s = value.trim();
   if (s === '') return NaN;
@@ -259,12 +244,13 @@ export const NuevoPresupuestoModal: React.FC<NuevoPresupuestoModalProps> = ({
                 className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
               >
                 <option value="00">Recurrente (todos los meses)</option>
-                {MONTHS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.name}
-                  </option>
-                ))}
+                <option value="13">Anual</option>
               </select>
+              <p className="text-xs font-medium text-on-surface-variant">
+                {month === '13'
+                  ? 'El importe introducido es el total único para todo el año.'
+                  : 'El importe introducido se aplica a cada mes del año (x12).'}
+              </p>
             </div>
           </div>
 

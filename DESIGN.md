@@ -203,7 +203,7 @@ Para actualizaciones masivas de movimientos se usa una tabla de reglas. Cada fil
 
 ### Endpoint
 
-`POST /conta/api/maintenance.php` recibe el JSON `{ filter_category, filter_subcategory, filter_description, final_category, final_subcategory, final_description, preview }`. Con `preview: true` devuelve `{ preview, total, movements }` sin modificar nada; con `preview: false` aplica los cambios en una transacción y devuelve `{ preview: false, updated, created_subcategories }`. El formulario se encuentra en la pestaña "Mantenimiento de Movimientos" de Ajustes (componente `MantenimientoMovimientos.tsx`).
+`POST /conta/api/maintenance.php` recibe el JSON `{ filter_category, filter_subcategory, filter_description, final_category, final_subcategory, final_description, preview }`. Con `preview: true` devuelve `{ preview, total, movements }` sin modificar nada; con `preview: false` aplica los cambios en una transacción y devuelve `{ preview: false, updated, created_subcategories }`. El formulario se encuentra en la pestaña "Movimientos" de Ajustes (componente `MantenimientoMovimientos.tsx`).
 
 ## 10. Configuración
 

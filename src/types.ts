@@ -34,6 +34,7 @@ export interface UserPreferences {
   highContrast: boolean;
   appTitle: string;
   appSubtitle: string;
+  listFont: string; // 'sans' | 'code'
 }
 
 export type BudgetType = 'gasto' | 'ingreso';
@@ -44,7 +45,7 @@ export interface Budget {
   subcategory_id: string | null;
   type: BudgetType;
   year: number;
-  month: string; // '00' = recurrente (todos los meses); '01'..'12' = mes concreto
+  month: string; // '00' = recurrente (todos los meses); '13' = anual (importe único para el año); '01'..'12' = mes concreto
   amount: number;
 }
 

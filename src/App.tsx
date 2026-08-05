@@ -27,6 +27,7 @@ export default function App() {
     highContrast: false,
     appTitle: 'Mis Cuentas',
     appSubtitle: 'Control Financiero',
+    listFont: 'sans',
   });
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +61,7 @@ export default function App() {
         highContrast: prefs.high_contrast,
         appTitle: prefs.app_title || 'Mis Cuentas',
         appSubtitle: prefs.app_subtitle || 'Control Financiero',
+        listFont: prefs.list_font || 'sans',
       });
     }).catch(() => {
       showToast('Error al cargar los datos del servidor');
@@ -376,7 +378,7 @@ export default function App() {
   return (
     <div className={`min-h-screen bg-background font-sans text-on-background antialiased ${preferences.highContrast ? 'high-contrast' : ''}`}>
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[100] bg-primary text-white font-semibold text-base px-6 py-4 rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 animate-slide-up">
+        <div className="fixed bottom-6 right-6 z-100 bg-primary text-white font-semibold text-base px-6 py-4 rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 animate-slide-up">
           <span className="material-symbols-outlined text-secondary-container">check_circle</span>
           <span>{toastMessage}</span>
         </div>
@@ -395,7 +397,7 @@ export default function App() {
           <PresupuestoView budgets={budgets} categories={categories} movements={movements} preferences={preferences} onSaveBudget={handleSaveBudget} onDeleteBudget={handleDeleteBudget} />
         )}
         {activeTab === 'ajustes' && (
-          <AjustesView categories={categories} preferences={preferences} username={username} onUpdatePreferences={(updated) => {
+          <AjustesView categories={categories} movements={movements} preferences={preferences} username={username} onUpdatePreferences={(updated) => {
             const newPrefs = { ...preferences, ...updated };
             setPreferences(newPrefs);
             api.updatePreferences({
@@ -404,6 +406,7 @@ export default function App() {
               high_contrast: newPrefs.highContrast,
               app_title: newPrefs.appTitle,
               app_subtitle: newPrefs.appSubtitle,
+              list_font: newPrefs.listFont,
             }).catch(() => showToast('Error al guardar preferencias'));
           }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
         )}

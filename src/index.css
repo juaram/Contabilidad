@@ -54,6 +54,7 @@
   --color-surface-tint: #3e5e95;
 
   --font-sans: 'Inter', sans-serif;
+  --font-code: 'Camingo Code', monospace;
   
   --spacing-margin-desktop: 64px;
   --spacing-margin-mobile: 20px;

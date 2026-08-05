@@ -64,6 +64,8 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     return '€';
   }, [preferences.currency]);
 
+  const listFontClass = preferences.listFont === 'code' ? 'font-code' : 'font-sans';
+
   // Budget for the currently selected period (gastos)
   const periodBudget = useMemo(
     () => budgetForPeriod(budgets, selectedYear, selectedMonth, 'gasto'),
@@ -200,7 +202,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
-      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 pb-0">
+      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-primary px-4 md:px-margin-desktop pt-2 pb-0">
         <div className="max-w-275 mx-auto flex flex-col gap-2">
           {/* Filters: single line */}
           <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -310,8 +312,8 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           </div>
 
           {/* Table Header (inside sticky section) */}
-          <div className="bg-white border-2 border-b-0 border-outline-variant rounded-t-xl overflow-hidden">
-            <table className="w-full border-collapse text-left table-fixed">
+          <div className="bg-white border-2 border-b-0 border-primary rounded-t-xl overflow-hidden">
+            <table className={`w-full border-collapse text-left table-fixed ${listFontClass}`}>
               <colgroup>
                 <col style={{ width: '11%' }} />
                 <col style={{ width: '12%' }} />
@@ -323,7 +325,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                 <col style={{ width: '8%' }} />
               </colgroup>
               <thead>
-                <tr className="bg-primary text-white border-b-2 border-outline-variant">
+                <tr className="bg-primary text-white border-b-2 border-primary">
                   <th className="px-3 py-3 font-semibold text-sm">
                     <button
                       onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
@@ -380,7 +382,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       <section className="px-4 md:px-margin-desktop pt-1 pb-stack-lg">
         <div className="max-w-275 mx-auto w-full">
           <div className="bg-white border-2 border-t-0 border-outline-variant rounded-b-xl overflow-x-auto shadow-sm">
-            <table className="w-full border-collapse text-left table-fixed">
+            <table className={`w-full border-collapse text-left table-fixed ${listFontClass}`}>
               <colgroup>
                 <col style={{ width: '11%' }} />
                 <col style={{ width: '12%' }} />
