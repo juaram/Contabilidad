@@ -379,7 +379,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
       </section>
 
       {/* Ledger Table Section */}
-      <section className="px-4 md:px-margin-desktop pt-1 pb-stack-lg">
+      <section className="px-4 md:px-margin-desktop pb-stack-lg">
         <div className="max-w-275 mx-auto w-full">
           <div className="bg-white border-2 border-t-0 border-outline-variant rounded-b-xl overflow-x-auto shadow-sm">
             <table className={`w-full border-collapse text-left table-fixed ${listFontClass}`}>
