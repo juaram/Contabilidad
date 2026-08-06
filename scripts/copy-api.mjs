@@ -16,7 +16,7 @@ if (!existsSync(src)) {
 if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
 mkdirSync(dest, { recursive: true });
 
-const files = readdirSync(src).filter((f) => f !== 'mock-server.mjs');
+const files = readdirSync(src).filter((f) => f !== 'mock-server.mjs' && f !== 'config.local.php' && f !== 'router.php');
 for (const f of files) {
   cpSync(join(src, f), join(dest, f), { recursive: true });
 }

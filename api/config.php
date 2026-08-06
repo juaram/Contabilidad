@@ -1,12 +1,16 @@
 <?php
 
-define('DB_HOST', 'POAPMYSQL143.dns-servicio.com');
-define('DB_PORT', 3306);
-define('DB_NAME', '8600814_compartida');
-define('DB_USER', '8600814_usuario');
-define('DB_PASS', '7Ps3u&iJuvO#5jvp');
+if (file_exists(__DIR__ . '/config.local.php')) {
+    require __DIR__ . '/config.local.php';
+} else {
+    define('DB_HOST', 'POAPMYSQL143.dns-servicio.com');
+    define('DB_PORT', 3306);
+    define('DB_NAME', '8600814_compartida');
+    define('DB_USER', '8600814_usuario');
+    define('DB_PASS', '7Ps3u&iJuvO#5jvp');
 
-define('TABLE_PREFIX', 'conta_');
+    define('TABLE_PREFIX', 'conta_');
+}
 
 try {
     $pdo = new PDO(

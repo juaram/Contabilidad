@@ -17,7 +17,19 @@ Aplicación web para la gestión de finanzas domésticas: control de ingresos, g
 
 ## Desarrollo local
 
-### Opción 1: Con servidor mock (recomendado, no requiere PHP)
+### Opción 1: Con API PHP contra la base de datos local (TrueNAS)
+
+Requisito: PHP 8+ con `pdo_mysql` (este repo lo configura en `api/config.local.php` con
+las credenciales del servidor TrueNAS; se ignora en git y NO se copia al build).
+
+```bash
+npm run dev:api             # Terminal 1 — API PHP real (puerto 8080) → TrueNAS
+npm run dev                  # Terminal 2 — Frontend
+```
+
+Abrir `http://localhost:5173/conta/`.
+
+### Opción 2: Con servidor mock (solo frontend, no requiere PHP)
 
 ```bash
 node api/mock-server.mjs    # Terminal 1 — API mock (puerto 8080)
@@ -26,23 +38,25 @@ npm run dev                  # Terminal 2 — Frontend
 
 Abrir `http://localhost:5173/conta/`.
 
-### Opción 2: Contra servidor remoto
+### Opción 3: Contra servidor remoto
 
-Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu`, luego `npm run dev`.
+Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu/conta`, luego `npm run dev`.
 
 ## Scripts
 
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Servidor de desarrollo Vite |
+| `npm run dev:api` | API PHP local (puerto 8080) conectada a la base de datos del TrueNAS |
 | `npm run build` | Build de producción en `dist/`. Además copia la carpeta `api/` dentro de `dist/api/` |
 | `npm run preview` | Previsualizar build |
 | `npm run lint` | TypeScript type-checking |
 
 > **Build:** `npm run build` ejecuta `vite build` y después `node scripts/copy-api.mjs`,
 > que copia todos los archivos de `api/` (endpoints PHP + `schema.sql`) a `dist/api/`.
-> `mock-server.mjs` se excluye por ser solo para desarrollo. El resultado de `dist/` es
-> autocontenido (frontend + backend) y listo para subir a producción.
+> Se excluyen por ser solo para desarrollo: `mock-server.mjs`, `router.php` y
+> `config.local.php` (así `dist/api/config.php` usa siempre las credenciales de Hostalia).
+> El resultado de `dist/` es autocontenido (frontend + backend) y listo para subir a producción.
 
 ## Despliegue en Hostalia
 
@@ -86,7 +100,9 @@ src/
     └── HelpModal.tsx
 
 api/
-├── config.php                 # Conexión MySQL
+├── config.php                 # Conexión MySQL (Hostalia; usa config.local.php si existe)
+├── config.local.php           # Credenciales TrueNAS (solo local, no se sube a git ni al build)
+├── router.php                 # Router del servidor PHP de desarrollo (php -S)
 ├── schema.sql                 # Tablas conta_*
 ├── categories.php
 ├── subcategories.php
@@ -95,5 +111,5 @@ api/
 ├── preferences.php
 ├── export.php
 ├── import.php
-└── mock-server.mjs            # Mock para desarrollo local
+└── mock-server.mjs            # Mock para desarrollo local (sin PHP)
 ```

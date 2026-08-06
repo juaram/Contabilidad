@@ -21,15 +21,15 @@ $balance = $totalIncome - $totalExpense;
 
 $monthlyStmt = $pdo->query("
     SELECT
-        DATE_FORMAT(date, '%Y-%m') AS year_month,
+        DATE_FORMAT(date, '%Y-%m') AS `year_month`,
         DATE_FORMAT(date, '%m') AS month_num,
         DATE_FORMAT(date, '%b') AS month_abbr,
         YEAR(date) AS year,
         COALESCE(SUM(CASE WHEN type = 'ingreso' THEN amount ELSE 0 END), 0) AS income,
         COALESCE(SUM(CASE WHEN type = 'gasto' THEN amount ELSE 0 END), 0) AS expense
     FROM " . TABLE_PREFIX . "movements
-    GROUP BY year_month, month_num, month_abbr, year
-    ORDER BY year_month DESC
+    GROUP BY `year_month`, month_num, month_abbr, year
+    ORDER BY `year_month` DESC
     LIMIT 6
 ");
 $monthlyData = $monthlyStmt->fetchAll();
