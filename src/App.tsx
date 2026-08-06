@@ -412,7 +412,7 @@ export default function App() {
         )}
       </main>
 
-      <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
+      <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} movements={movements} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
       <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} editingCategory={editingCategory} onClose={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
       <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />

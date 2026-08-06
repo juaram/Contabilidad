@@ -202,7 +202,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
-      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-primary px-4 md:px-margin-desktop pt-2 pb-0">
+      <section className="sticky top-24 z-40 bg-blue-200 border-b-2 border-primary px-4 md:px-margin-desktop pt-2 pb-0">
         <div className="max-w-275 mx-auto flex flex-col gap-2">
           {/* Filters: single line */}
           <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">

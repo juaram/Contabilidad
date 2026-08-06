@@ -130,16 +130,16 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Ajustes sub-tabs */}
-      <section className="px-4 md:px-margin-desktop pt-6">
+      <section className="bg-blue-200 border-b-2 border-primary px-4 md:px-margin-desktop pt-2 pb-2">
         <div className="max-w-275 mx-auto w-full flex flex-wrap gap-2">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setAjustesTab(tab.id)}
-              className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-full transition-all font-semibold text-base select-none ${
+              className={`flex items-center h-touch-target-min px-4 md:px-6 rounded-lg transition-all font-semibold text-base select-none ${
                 ajustesTab === tab.id
                   ? 'bg-primary text-on-primary shadow-sm'
-                  : 'border-2 border-outline-variant text-on-surface-variant hover:bg-surface-container-high'
+                  : 'border-2 border-primary text-on-surface-variant hover:bg-surface-container-high'
               }`}
             >
               <span className="material-symbols-outlined mr-2 text-[22px]">{tab.icon}</span>
@@ -152,8 +152,8 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
       {ajustesTab === 'mantenimiento' ? (
         <section className="px-4 md:px-margin-desktop py-stack-lg">
           <div className="max-w-275 mx-auto w-full flex flex-col gap-6">
-            <MantenimientoMovimientos categories={categories} onToast={onToast} onApplied={onMaintenanceApplied} />
             <CorreccionOrtografica movements={movements} onToast={onToast} onApplied={onMaintenanceApplied} />
+            <MantenimientoMovimientos categories={categories} onToast={onToast} onApplied={onMaintenanceApplied} />
           </div>
         </section>
       ) : ajustesTab === 'preferencias' ? (

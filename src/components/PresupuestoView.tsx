@@ -255,8 +255,8 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Filters Header */}
-      <section className="sticky top-24 z-40 bg-surface-container-low border-b-2 border-outline-variant px-4 md:px-margin-desktop pt-2 pb-2">
-        <div className="max-w-[1100px] mx-auto flex flex-col gap-2">
+      <section className="sticky top-24 z-40 bg-blue-200 border-b-2 border-primary px-4 md:px-margin-desktop pt-2 pb-2">
+        <div className="max-w-275 mx-auto flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2 overflow-x-auto scrollbar-hide">
             {/* Type Toggle */}
             <div className="flex items-center gap-1 bg-white border-2 border-outline-variant rounded-lg p-1 shrink-0">
@@ -282,7 +282,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[110px] cursor-pointer shrink-0"
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-27.5 cursor-pointer shrink-0"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -295,7 +295,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-[150px] cursor-pointer shrink-0"
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-37.5 cursor-pointer shrink-0"
             >
               {PERIODS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -306,7 +306,7 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
 
             <button
               onClick={() => handleOpenNew()}
-              className="h-10 px-4 ml-auto bg-primary text-on-primary font-bold text-sm rounded-lg border-2 border-primary hover:bg-primary-container transition-colors cursor-pointer shrink-0 flex items-center gap-2"
+              className="flex items-center h-touch-target-min px-4 md:px-6 rounded-lg bg-primary text-on-primary font-semibold text-base shadow-sm transition-all cursor-pointer shrink-0 ml-auto select-none"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               Nuevo presupuesto
@@ -317,9 +317,9 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
 
       {/* Body */}
       <section className="px-4 md:px-margin-desktop pt-4 pb-stack-lg">
-        <div className="max-w-[1100px] mx-auto w-full flex flex-col gap-6">
+        <div className="max-w-275 mx-auto w-full flex flex-col gap-6">
           {/* Totals summary */}
-          <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl p-6 md:p-8 shadow-sm">
+          <div className="bg-blue-100 border-2 border-primary rounded-xl p-6 md:p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div className="flex flex-col gap-1">
                 <span className="font-semibold text-sm text-on-surface-variant uppercase tracking-widest">

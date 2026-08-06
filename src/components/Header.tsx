@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenNewEntry, appTitle, appSubtitle, username }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 h-24 bg-surface border-b-2 border-outline-variant z-50 px-4 md:px-margin-desktop grid grid-cols-3 items-center backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 h-24 bg-surface border-b-2 border-primary z-50 px-4 md:px-margin-desktop grid grid-cols-3 items-center backdrop-blur-md">
       {/* Column 1: Title & Subtitle */}
       <div
         onClick={() => setActiveTab('inicio')}
