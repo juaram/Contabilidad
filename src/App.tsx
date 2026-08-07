@@ -6,6 +6,7 @@ import { RegistroView } from './components/RegistroView';
 import { PresupuestoView } from './components/PresupuestoView';
 import { AjustesView } from './components/AjustesView';
 import { NuevaEntradaModal } from './components/NuevaEntradaModal';
+import { MultiRegistroModal } from './components/MultiRegistroModal';
 import { NuevaCategoriaModal } from './components/NuevaCategoriaModal';
 import { HelpModal } from './components/HelpModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
@@ -34,6 +35,7 @@ export default function App() {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [entryModalType, setEntryModalType] = useState<MovementType>('gasto');
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
+  const [isMultiRegistroOpen, setIsMultiRegistroOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalMode, setCategoryModalMode] = useState<'category' | 'subcategory'>('category');
   const [parentCategoryForSub, setParentCategoryForSub] = useState<string>('');
@@ -74,6 +76,11 @@ export default function App() {
   };
 
   const handleOpenAddEntryModal = (type: MovementType = 'gasto') => {
+    if (type === 'ingreso') {
+      setEditingMovement(null);
+      setIsMultiRegistroOpen(true);
+      return;
+    }
     setEditingMovement(null);
     setEntryModalType(type);
     setIsEntryModalOpen(true);
@@ -116,6 +123,65 @@ export default function App() {
       setIsEntryModalOpen(false);
     } catch {
       showToast('Error al guardar el movimiento');
+    }
+  };
+
+  const handleSaveMultiRegistro = async (
+    entries: {
+      id?: string;
+      date: string;
+      category_id: string;
+      category: string;
+      subcategory_id: number;
+      subcategory: string;
+      description: string;
+      type: "ingreso";
+      amount: number;
+    }[],
+  ) => {
+    try {
+      let savedCount = 0;
+      let updatedCount = 0;
+      const created: Movement[] = [];
+      for (const e of entries) {
+        if (e.id) {
+          const saved = await api.updateMovement(parseInt(e.id), {
+            date: e.date,
+            category_id: Number(e.category_id),
+            subcategory_id: e.subcategory_id,
+            description: e.description,
+            type: e.type,
+            amount: e.amount,
+          });
+          const norm = normalizeMovement(saved);
+          setMovements((prev) =>
+            prev.map((m) => (m.id === e.id ? norm : m)),
+          );
+          updatedCount++;
+        } else {
+          const saved = await api.createMovement({
+            date: e.date,
+            category_id: Number(e.category_id),
+            subcategory_id: e.subcategory_id,
+            description: e.description,
+            type: e.type,
+            amount: e.amount,
+          });
+          created.push(normalizeMovement(saved));
+          savedCount++;
+        }
+      }
+      if (created.length > 0) {
+        setMovements((prev) => [...created.reverse(), ...prev]);
+      }
+      const parts = [];
+      if (savedCount > 0) parts.push(`${savedCount} ingresos registrados`);
+      if (updatedCount > 0) parts.push(`${updatedCount} ingresos actualizados`);
+      showToast(`✓ ${parts.join(" y ")} correctamente.`);
+    } catch {
+      showToast('Error al guardar los ingresos');
+    } finally {
+      setIsMultiRegistroOpen(false);
     }
   };
 
@@ -413,6 +479,7 @@ export default function App() {
       </main>
 
       <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} movements={movements} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
+      <MultiRegistroModal isOpen={isMultiRegistroOpen} categories={categories} movements={movements} onClose={() => setIsMultiRegistroOpen(false)} onChoseSingle={() => { setIsMultiRegistroOpen(false); setEditingMovement(null); setEntryModalType('ingreso'); setIsEntryModalOpen(true); }} onSave={handleSaveMultiRegistro} />
       <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} editingCategory={editingCategory} onClose={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
       <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />
