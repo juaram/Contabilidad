@@ -148,7 +148,7 @@ const routes = {
       last_movements: movements.slice(0, 3).map(m => ({ ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, category_icon: catMap[m.category_id]?.icon, subcategory: subMap[m.subcategory_id]?.name || '' }))
     });
   },
-  'GET /conta/api/preferences.php': (req, res) => respond(res, { id: 1, currency: 'Euro (€) - EUR', date_format: 'DD / MM / AAAA (31/12/2024)', high_contrast: 0, app_title: 'Mis Cuentas', app_subtitle: 'Control Financiero' }),
+  'GET /conta/api/preferences.php': (req, res) => respond(res, { id: 1, currency: 'Euro (€) - EUR', date_format: 'DD / MM / AAAA (31/12/2024)', high_contrast: 0, app_title: 'Mis Cuentas', app_subtitle: 'Control Financiero', list_font: 'sans', multi_registro: 1 }),
   'PUT /conta/api/preferences.php': async (req, res) => respond(res, { id: 1, ...await parseBody(req) }),
   'GET /conta/api/budgets.php': (req, res) => {
     const url = new URL(req.url, 'http://localhost');

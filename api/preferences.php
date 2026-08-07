@@ -32,12 +32,14 @@ function getPreferences(): void
             'app_title' => 'Mis Cuentas',
             'app_subtitle' => 'Control Financiero',
             'list_font' => 'sans',
+            'multi_registro' => 1,
         ];
     }
 
     $prefs['id'] = (int) $prefs['id'];
     $prefs['high_contrast'] = (bool) $prefs['high_contrast'];
     $prefs['list_font'] = isset($prefs['list_font']) ? $prefs['list_font'] : 'sans';
+    $prefs['multi_registro'] = isset($prefs['multi_registro']) ? (bool) $prefs['multi_registro'] : true;
 
     jsonResponse($prefs);
 }
@@ -49,6 +51,7 @@ function updatePreferences(): void
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN app_title VARCHAR(100) NOT NULL DEFAULT 'Mis Cuentas' AFTER high_contrast"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN app_subtitle VARCHAR(200) NOT NULL DEFAULT 'Control Financiero' AFTER app_title"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN list_font VARCHAR(20) NOT NULL DEFAULT 'sans' AFTER app_subtitle"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN multi_registro TINYINT(1) NOT NULL DEFAULT 1 AFTER list_font"); } catch (PDOException $e) { }
 
     $input = getInput();
     $fields = [];
@@ -77,6 +80,10 @@ function updatePreferences(): void
     if (isset($input['list_font'])) {
         $fields[] = "list_font = :list_font";
         $params[':list_font'] = trim($input['list_font']);
+    }
+    if (isset($input['multi_registro'])) {
+        $fields[] = "multi_registro = :multi_registro";
+        $params[':multi_registro'] = $input['multi_registro'] ? 1 : 0;
     }
 
     if (count($fields) === 0) {

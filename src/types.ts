@@ -35,6 +35,7 @@ export interface UserPreferences {
   appTitle: string;
   appSubtitle: string;
   listFont: string; // 'sans' | 'code'
+  multiRegistro: boolean; // mostrar popup de registro múltiple al añadir ingreso
 }
 
 export type BudgetType = 'gasto' | 'ingreso';

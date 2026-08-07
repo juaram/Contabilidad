@@ -29,6 +29,7 @@ export default function App() {
     appTitle: 'Mis Cuentas',
     appSubtitle: 'Control Financiero',
     listFont: 'sans',
+    multiRegistro: true,
   });
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +65,7 @@ export default function App() {
         appTitle: prefs.app_title || 'Mis Cuentas',
         appSubtitle: prefs.app_subtitle || 'Control Financiero',
         listFont: prefs.list_font || 'sans',
+        multiRegistro: prefs.multi_registro !== 0 && prefs.multi_registro !== false,
       });
     }).catch(() => {
       showToast('Error al cargar los datos del servidor');
@@ -76,7 +78,7 @@ export default function App() {
   };
 
   const handleOpenAddEntryModal = (type: MovementType = 'gasto') => {
-    if (type === 'ingreso') {
+    if (type === 'ingreso' && preferences.multiRegistro) {
       setEditingMovement(null);
       setIsMultiRegistroOpen(true);
       return;
@@ -473,6 +475,7 @@ export default function App() {
               app_title: newPrefs.appTitle,
               app_subtitle: newPrefs.appSubtitle,
               list_font: newPrefs.listFont,
+              multi_registro: newPrefs.multiRegistro,
             }).catch(() => showToast('Error al guardar preferencias'));
           }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
         )}

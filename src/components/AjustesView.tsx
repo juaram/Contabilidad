@@ -158,7 +158,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
         </section>
       ) : ajustesTab === 'preferencias' ? (
         <section className="px-4 md:px-margin-desktop py-stack-lg">
-          <div className="max-w-275 mx-auto w-full">
+          <div className="max-w-275 mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
               <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between">
                 <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
@@ -192,19 +192,6 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   >
                     <option>DD / MM / AAAA (31/12/2024)</option>
                     <option>DD de Mes de AAAA</option>
-                  </select>
-                </div>
-
-                {/* Registro List Font */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-semibold text-base text-on-surface-variant">Fuente del listado de Registro</label>
-                  <select
-                    value={preferences.listFont}
-                    onChange={(e) => onUpdatePreferences({ listFont: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option value="sans">Inter (actual)</option>
-                    <option value="code">Camingo Code</option>
                   </select>
                 </div>
 
@@ -259,6 +246,50 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     Guardar cambios
                   </button>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between">
+                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">list_alt</span>
+                  <span>Preferencias Registro</span>
+                </h3>
+              </div>
+
+              <div className="p-4 md:p-stack-md flex flex-col gap-6">
+                {/* Multi Registro Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-base text-on-surface">Registros múltiples</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Permitir añadir varios registros al añadir un ingreso</span>
+                  </div>
+                  <button
+                    onClick={() => onUpdatePreferences({ multiRegistro: !preferences.multiRegistro })}
+                    className={`w-16 h-8 rounded-full relative transition-colors duration-300 cursor-pointer ${
+                      preferences.multiRegistro ? 'bg-secondary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
+                        preferences.multiRegistro ? 'translate-x-8' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Registro List Font */}
+                <div className="flex flex-col gap-2 border-t border-outline-variant/60 pt-4">
+                  <label className="font-semibold text-base text-on-surface-variant">Fuente del listado de Registro</label>
+                  <select
+                    value={preferences.listFont}
+                    onChange={(e) => onUpdatePreferences({ listFont: e.target.value })}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
+                  >
+                    <option value="sans">Inter (actual)</option>
+                    <option value="code">Camingo Code</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

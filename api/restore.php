@@ -99,6 +99,8 @@ try {
         if (isset($preferences['highContrast'])) { $prefSql[] = "high_contrast = :high_contrast"; $prefParams[':high_contrast'] = $preferences['highContrast'] ? 1 : 0; }
         if (isset($preferences['appTitle'])) { $prefSql[] = "app_title = :app_title"; $prefParams[':app_title'] = trim($preferences['appTitle']); }
         if (isset($preferences['appSubtitle'])) { $prefSql[] = "app_subtitle = :app_subtitle"; $prefParams[':app_subtitle'] = trim($preferences['appSubtitle']); }
+        if (isset($preferences['listFont'])) { $prefSql[] = "list_font = :list_font"; $prefParams[':list_font'] = trim($preferences['listFont']); }
+        if (isset($preferences['multiRegistro'])) { $prefSql[] = "multi_registro = :multi_registro"; $prefParams[':multi_registro'] = $preferences['multiRegistro'] ? 1 : 0; }
         if (count($prefSql) > 0) {
             $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "preferences SET " . implode(', ', $prefSql) . " WHERE id = :id");
             $stmt->execute($prefParams);

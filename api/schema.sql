@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS conta_preferences (
     high_contrast TINYINT(1) NOT NULL DEFAULT 0,
     app_title VARCHAR(100) NOT NULL DEFAULT 'Mis Cuentas',
     app_subtitle VARCHAR(200) NOT NULL DEFAULT 'Control Financiero',
+    list_font VARCHAR(20) NOT NULL DEFAULT 'sans',
+    multi_registro TINYINT(1) NOT NULL DEFAULT 1,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
