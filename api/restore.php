@@ -101,6 +101,10 @@ try {
         if (isset($preferences['appSubtitle'])) { $prefSql[] = "app_subtitle = :app_subtitle"; $prefParams[':app_subtitle'] = trim($preferences['appSubtitle']); }
         if (isset($preferences['listFont'])) { $prefSql[] = "list_font = :list_font"; $prefParams[':list_font'] = trim($preferences['listFont']); }
         if (isset($preferences['multiRegistro'])) { $prefSql[] = "multi_registro = :multi_registro"; $prefParams[':multi_registro'] = $preferences['multiRegistro'] ? 1 : 0; }
+        if (isset($preferences['dropdownBg'])) { $prefSql[] = "dropdown_bg = :dropdown_bg"; $prefParams[':dropdown_bg'] = trim($preferences['dropdownBg']); }
+        if (isset($preferences['dropdownBorder'])) { $prefSql[] = "dropdown_border = :dropdown_border"; $prefParams[':dropdown_border'] = trim($preferences['dropdownBorder']); }
+        if (isset($preferences['dropdownBorderWidth'])) { $prefSql[] = "dropdown_border_width = :dropdown_border_width"; $prefParams[':dropdown_border_width'] = (int) $preferences['dropdownBorderWidth']; }
+        if (isset($preferences['dropdownRadius'])) { $prefSql[] = "dropdown_radius = :dropdown_radius"; $prefParams[':dropdown_radius'] = (int) $preferences['dropdownRadius']; }
         if (count($prefSql) > 0) {
             $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "preferences SET " . implode(', ', $prefSql) . " WHERE id = :id");
             $stmt->execute($prefParams);

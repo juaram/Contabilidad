@@ -13,6 +13,7 @@ import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { UsersManagementModal } from './components/UsersManagementModal';
 import { ImportacionErroresModal, InvalidRecord } from './components/ImportacionErroresModal';
 import { Budget, Category, Movement, MovementType, UserPreferences } from './types';
+import { DropdownThemeProvider } from './dropdownTheme';
 import * as api from './api';
 
 export default function App() {
@@ -30,6 +31,10 @@ export default function App() {
     appSubtitle: 'Control Financiero',
     listFont: 'sans',
     multiRegistro: true,
+    dropdownBg: '#bfdbfe',
+    dropdownBorder: '#93c5fd',
+    dropdownBorderWidth: 2,
+    dropdownRadius: 12,
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +42,7 @@ export default function App() {
   const [entryModalType, setEntryModalType] = useState<MovementType>('gasto');
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
   const [isMultiRegistroOpen, setIsMultiRegistroOpen] = useState(false);
+  const [multiRegistroType, setMultiRegistroType] = useState<MovementType>('ingreso');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalMode, setCategoryModalMode] = useState<'category' | 'subcategory'>('category');
   const [parentCategoryForSub, setParentCategoryForSub] = useState<string>('');
@@ -66,6 +72,10 @@ export default function App() {
         appSubtitle: prefs.app_subtitle || 'Control Financiero',
         listFont: prefs.list_font || 'sans',
         multiRegistro: prefs.multi_registro !== 0 && prefs.multi_registro !== false,
+        dropdownBg: prefs.dropdown_bg || '#bfdbfe',
+        dropdownBorder: prefs.dropdown_border || '#93c5fd',
+        dropdownBorderWidth: prefs.dropdown_border_width ?? 2,
+        dropdownRadius: prefs.dropdown_radius ?? 12,
       });
     }).catch(() => {
       showToast('Error al cargar los datos del servidor');
@@ -78,7 +88,8 @@ export default function App() {
   };
 
   const handleOpenAddEntryModal = (type: MovementType = 'gasto') => {
-    if (type === 'ingreso' && preferences.multiRegistro) {
+    if (preferences.multiRegistro) {
+      setMultiRegistroType(type);
       setEditingMovement(null);
       setIsMultiRegistroOpen(true);
       return;
@@ -137,10 +148,12 @@ export default function App() {
       subcategory_id: number;
       subcategory: string;
       description: string;
-      type: "ingreso";
+      type: MovementType;
       amount: number;
     }[],
   ) => {
+    const tipo = entries[0]?.type ?? 'gasto';
+    const grupo = tipo === 'gasto' ? 'gastos' : 'ingresos';
     try {
       let savedCount = 0;
       let updatedCount = 0;
@@ -177,11 +190,11 @@ export default function App() {
         setMovements((prev) => [...created.reverse(), ...prev]);
       }
       const parts = [];
-      if (savedCount > 0) parts.push(`${savedCount} ingresos registrados`);
-      if (updatedCount > 0) parts.push(`${updatedCount} ingresos actualizados`);
+      if (savedCount > 0) parts.push(`${savedCount} ${grupo} registrados`);
+      if (updatedCount > 0) parts.push(`${updatedCount} ${grupo} actualizados`);
       showToast(`✓ ${parts.join(" y ")} correctamente.`);
     } catch {
-      showToast('Error al guardar los ingresos');
+      showToast(`Error al guardar ${tipo === 'gasto' ? 'los gastos' : 'los ingresos'}`);
     } finally {
       setIsMultiRegistroOpen(false);
     }
@@ -251,7 +264,7 @@ export default function App() {
       setCategories((prev) =>
         prev.map((cat) => {
           if (cat.id === parent.id) {
-            return { ...cat, subcategories: [...cat.subcategories, { id: String(saved.id), name: saved.name }] };
+            return { ...cat, subcategories: [...cat.subcategories, { id: String(saved.id), name: saved.name, active: true }] };
           }
           return cat;
         })
@@ -276,6 +289,33 @@ export default function App() {
       showToast('✓ Subcategoría eliminada.');
     } catch {
       showToast('Error al eliminar la subcategoría');
+    }
+  };
+
+  const handleToggleSubcategory = async (categoryId: string, subcategoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    const sub = cat?.subcategories.find((s) => s.id === subcategoryId);
+    if (!sub) return;
+    const nextActive = !(sub.active !== false);
+    const previous = categories;
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === categoryId
+          ? {
+              ...c,
+              subcategories: c.subcategories.map((s) =>
+                s.id === subcategoryId ? { ...s, active: nextActive } : s
+              ),
+            }
+          : c
+      )
+    );
+    try {
+      await api.updateSubcategory(parseInt(subcategoryId), nextActive);
+      showToast(nextActive ? `✓ Subcategoría "${sub.name}" activada.` : `✓ Subcategoría "${sub.name}" desactivada.`);
+    } catch {
+      setCategories(previous);
+      showToast('Error al cambiar el estado de la subcategoría');
     }
   };
 
@@ -444,7 +484,15 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-background font-sans text-on-background antialiased ${preferences.highContrast ? 'high-contrast' : ''}`}>
+    <DropdownThemeProvider
+      value={{
+        background: preferences.dropdownBg || '#bfdbfe',
+        borderColor: preferences.dropdownBorder || '#93c5fd',
+        borderWidth: preferences.dropdownBorderWidth ?? 2,
+        radius: preferences.dropdownRadius ?? 12,
+      }}
+    >
+      <div className={`min-h-screen bg-background font-sans text-on-background antialiased ${preferences.highContrast ? 'high-contrast' : ''}`}>
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-100 bg-primary text-white font-semibold text-base px-6 py-4 rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 animate-slide-up">
           <span className="material-symbols-outlined text-secondary-container">check_circle</span>
@@ -476,19 +524,24 @@ export default function App() {
               app_subtitle: newPrefs.appSubtitle,
               list_font: newPrefs.listFont,
               multi_registro: newPrefs.multiRegistro,
+              dropdown_bg: newPrefs.dropdownBg,
+              dropdown_border: newPrefs.dropdownBorder,
+              dropdown_border_width: newPrefs.dropdownBorderWidth,
+              dropdown_radius: newPrefs.dropdownRadius,
             }).catch(() => showToast('Error al guardar preferencias'));
-          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
+          }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onToggleSubcategory={handleToggleSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
         )}
       </main>
 
       <NuevaEntradaModal isOpen={isEntryModalOpen} initialType={entryModalType} categories={categories} movements={movements} editingMovement={editingMovement} onClose={() => { setEditingMovement(null); setIsEntryModalOpen(false); }} onSave={handleSaveMovement} />
-      <MultiRegistroModal isOpen={isMultiRegistroOpen} categories={categories} movements={movements} onClose={() => setIsMultiRegistroOpen(false)} onChoseSingle={() => { setIsMultiRegistroOpen(false); setEditingMovement(null); setEntryModalType('ingreso'); setIsEntryModalOpen(true); }} onSave={handleSaveMultiRegistro} />
+      <MultiRegistroModal isOpen={isMultiRegistroOpen} type={multiRegistroType} categories={categories} movements={movements} onClose={() => setIsMultiRegistroOpen(false)} onChoseSingle={() => { setIsMultiRegistroOpen(false); setEditingMovement(null); setEntryModalType(multiRegistroType); setIsEntryModalOpen(true); }} onSave={handleSaveMultiRegistro} />
       <NuevaCategoriaModal isOpen={isCategoryModalOpen} mode={categoryModalMode} parentCategoryName={parentCategoryForSub} editingCategory={editingCategory} onClose={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }} onSaveCategory={handleSaveCategory} onSaveSubcategory={handleSaveSubcategory} />
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
       <ImportacionErroresModal isOpen={importErrors.length > 0} records={importErrors} onClose={() => setImportErrors([])} />
       <ChangePasswordModal isOpen={isPasswordModalOpen} username={username} onClose={() => setIsPasswordModalOpen(false)} showToast={showToast} />
       <UsersManagementModal isOpen={isUsersModalOpen} currentUsername={username} onClose={() => setIsUsersModalOpen(false)} showToast={showToast} />
     </div>
+    </DropdownThemeProvider>
   );
 }
 
@@ -503,6 +556,7 @@ function normalizeCategory(c: any): Category {
     subcategories: (c.subcategories || []).map((s: any) => ({
       id: String(s.id),
       name: s.name,
+      active: s.active === undefined || s.active === null ? true : Boolean(Number(s.active)),
     })),
   };
 }

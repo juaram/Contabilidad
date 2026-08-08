@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS conta_subcategories (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id INT UNSIGNED NOT NULL,
     name VARCHAR(100) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES conta_categories(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -40,6 +41,10 @@ CREATE TABLE IF NOT EXISTS conta_preferences (
     app_subtitle VARCHAR(200) NOT NULL DEFAULT 'Control Financiero',
     list_font VARCHAR(20) NOT NULL DEFAULT 'sans',
     multi_registro TINYINT(1) NOT NULL DEFAULT 1,
+    dropdown_bg VARCHAR(20) NOT NULL DEFAULT '#bfdbfe',
+    dropdown_border VARCHAR(20) NOT NULL DEFAULT '#93c5fd',
+    dropdown_border_width INT NOT NULL DEFAULT 2,
+    dropdown_radius INT NOT NULL DEFAULT 12,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

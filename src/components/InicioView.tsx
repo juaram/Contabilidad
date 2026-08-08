@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Budget, Movement, UserPreferences } from '../types';
 import { actualForPeriod, budgetForPeriod } from '../budgetUtils';
+import { SelectorList } from './SelectorList';
 
 interface InicioViewProps {
   movements: Movement[];
@@ -26,7 +27,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
 
   // Format amount with decimal comma and thousands dot
   const formatAmount = (val: number) => {
-    return val.toLocaleString('es-ES', {
+    return Math.abs(val).toLocaleString('es-ES', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -135,7 +136,7 @@ export const InicioView: React.FC<InicioViewProps> = ({
   const budgetRemainingText =
     monthBudget <= 0
       ? 'Sin presupuesto para este mes'
-      : `Restante: ${formatAmount(monthBudget - monthSpent)}${currencySymbol}`;
+      : `Restante: ${formatCurrency(monthBudget - monthSpent)}`;
 
   // Recent 3 movements
   const recentMovements = useMemo(() => {
@@ -295,17 +296,12 @@ export const InicioView: React.FC<InicioViewProps> = ({
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="h-14 px-4 bg-white border-2 border-outline-variant font-semibold text-base rounded-full focus:border-primary outline-none cursor-pointer"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  Año {year}
-                </option>
-              ))}
-            </select>
+            <SelectorList
+              value={String(selectedYear)}
+              onChange={(v) => setSelectedYear(Number(v))}
+              options={availableYears.map((year) => ({ value: String(year), label: `Año ${year}` }))}
+              className="h-14 px-4 bg-white border-2 border-outline-variant font-semibold text-base rounded-full"
+            />
             <button
               onClick={onGoToRegistro}
               className="flex items-center justify-center gap-3 px-6 md:px-8 h-14 bg-primary text-on-primary rounded-full font-semibold text-base md:text-lg hover:bg-primary-container transition-colors cursor-pointer"

@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Category, Movement, MovementType } from "../types";
+import { SelectorFecha } from "./SelectorFecha";
+import { SelectorList } from "./SelectorList";
+import { useDropdownTheme, dropdownPanelStyle } from "../dropdownTheme";
 
 const MONTH_NAMES_FULL = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -67,6 +70,7 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const theme = useDropdownTheme();
   const [type, setType] = useState<MovementType>(initialType);
   const [amount, setAmount] = useState<string>("");
   const [date, setDate] = useState<string>(
@@ -109,6 +113,10 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
   const currentCategoryObj = selectedCategoryCode
     ? categories.find((c) => c.id === selectedCategoryCode)
     : null;
+
+  const activeSubs = currentCategoryObj
+    ? currentCategoryObj.subcategories.filter((s) => s.active !== false)
+    : [];
 
   const descSuggestions = useMemo(() => {
     if (!selectedCategoryCode || !subcategory) return [];
@@ -178,6 +186,10 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!date) {
+      alert("Por favor seleccione una fecha.");
+      return;
+    }
     const parsedAmount = parseAmount(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       alert("Por favor ingrese un importe válido.");
@@ -282,12 +294,12 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                 Fecha
               </label>
               <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  required
+                <SelectorFecha
+                  mode="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="flex-1 h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
+                  onChange={setDate}
+                  placeholder="Elige una fecha"
+                  className="flex-1"
                 />
                 <button
                   type="button"
@@ -316,18 +328,13 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
               <label className="block font-semibold text-base text-on-surface">
                 Categoría
               </label>
-              <select
+              <SelectorList
                 value={selectedCategoryCode}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                <option value="">Elegir uno</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+                onChange={handleCategoryChange}
+                placeholder="Elegir uno"
+                options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
             </div>
 
             {/* Subcategory */}
@@ -335,35 +342,24 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
               <label className="block font-semibold text-base text-on-surface">
                 Subcategoría
               </label>
-              <select
+              <SelectorList
                 value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                <option value="">Elegir uno</option>
-                {currentCategoryObj ? (
-                  currentCategoryObj.subcategories.length > 0 ? (
-                    <>
-                      {editingMovement &&
-                      editingMovement.subcategory &&
-                      !currentCategoryObj.subcategories.some(
-                        (s) => s.name === editingMovement.subcategory,
-                      ) ? (
-                        <option value={editingMovement.subcategory}>
-                          {editingMovement.subcategory}
-                        </option>
-                      ) : null}
-                      {currentCategoryObj.subcategories.map((sub) => (
-                        <option key={sub.id} value={sub.name}>
-                          {sub.name}
-                        </option>
-                      ))}
-                    </>
-                  ) : (
-                    <option value="General">General</option>
+                onChange={setSubcategory}
+                placeholder="Elegir uno"
+                options={[
+                  ...(editingMovement &&
+                  editingMovement.subcategory &&
+                  !activeSubs.some(
+                    (s) => s.name === editingMovement.subcategory,
                   )
-                ) : null}
-              </select>
+                    ? [{ value: editingMovement.subcategory, label: editingMovement.subcategory }]
+                    : []),
+                  ...(activeSubs.length > 0
+                    ? activeSubs.map((sub) => ({ value: sub.name, label: sub.name }))
+                    : [{ value: 'General', label: 'General' }]),
+                ]}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
             </div>
           </div>
 
@@ -384,8 +380,8 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
             />
             {descSuggestionOpen && descSuggestions.length > 0 && (
               <div
-                style={{ maxHeight: descListMaxHeight -5 || undefined }}
-                className="absolute z-50 left-0 right-0 mt-0 bg-blue-100 border-2 border-outline-variant rounded-xl shadow-2xl overflow-y-auto overscroll-contain"
+                style={{ ...dropdownPanelStyle(theme), maxHeight: descListMaxHeight - 5 || undefined }}
+                className="absolute z-50 left-0 right-0 mt-0 shadow-2xl overflow-y-auto overscroll-contain"
               >
                 {descSuggestions.map((d, idx) => (
                   <button

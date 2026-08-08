@@ -33,6 +33,10 @@ function getPreferences(): void
             'app_subtitle' => 'Control Financiero',
             'list_font' => 'sans',
             'multi_registro' => 1,
+            'dropdown_bg' => '#bfdbfe',
+            'dropdown_border' => '#93c5fd',
+            'dropdown_border_width' => 2,
+            'dropdown_radius' => 12,
         ];
     }
 
@@ -40,6 +44,10 @@ function getPreferences(): void
     $prefs['high_contrast'] = (bool) $prefs['high_contrast'];
     $prefs['list_font'] = isset($prefs['list_font']) ? $prefs['list_font'] : 'sans';
     $prefs['multi_registro'] = isset($prefs['multi_registro']) ? (bool) $prefs['multi_registro'] : true;
+    $prefs['dropdown_bg'] = isset($prefs['dropdown_bg']) ? $prefs['dropdown_bg'] : '#bfdbfe';
+    $prefs['dropdown_border'] = isset($prefs['dropdown_border']) ? $prefs['dropdown_border'] : '#93c5fd';
+    $prefs['dropdown_border_width'] = isset($prefs['dropdown_border_width']) ? (int) $prefs['dropdown_border_width'] : 2;
+    $prefs['dropdown_radius'] = isset($prefs['dropdown_radius']) ? (int) $prefs['dropdown_radius'] : 12;
 
     jsonResponse($prefs);
 }
@@ -52,6 +60,10 @@ function updatePreferences(): void
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN app_subtitle VARCHAR(200) NOT NULL DEFAULT 'Control Financiero' AFTER app_title"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN list_font VARCHAR(20) NOT NULL DEFAULT 'sans' AFTER app_subtitle"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN multi_registro TINYINT(1) NOT NULL DEFAULT 1 AFTER list_font"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_bg VARCHAR(20) NOT NULL DEFAULT '#bfdbfe' AFTER multi_registro"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_border VARCHAR(20) NOT NULL DEFAULT '#93c5fd' AFTER dropdown_bg"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_border_width INT NOT NULL DEFAULT 2 AFTER dropdown_border"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_radius INT NOT NULL DEFAULT 12 AFTER dropdown_border_width"); } catch (PDOException $e) { }
 
     $input = getInput();
     $fields = [];
@@ -84,6 +96,22 @@ function updatePreferences(): void
     if (isset($input['multi_registro'])) {
         $fields[] = "multi_registro = :multi_registro";
         $params[':multi_registro'] = $input['multi_registro'] ? 1 : 0;
+    }
+    if (isset($input['dropdown_bg'])) {
+        $fields[] = "dropdown_bg = :dropdown_bg";
+        $params[':dropdown_bg'] = trim($input['dropdown_bg']);
+    }
+    if (isset($input['dropdown_border'])) {
+        $fields[] = "dropdown_border = :dropdown_border";
+        $params[':dropdown_border'] = trim($input['dropdown_border']);
+    }
+    if (isset($input['dropdown_border_width'])) {
+        $fields[] = "dropdown_border_width = :dropdown_border_width";
+        $params[':dropdown_border_width'] = (int) $input['dropdown_border_width'];
+    }
+    if (isset($input['dropdown_radius'])) {
+        $fields[] = "dropdown_radius = :dropdown_radius";
+        $params[':dropdown_radius'] = (int) $input['dropdown_radius'];
     }
 
     if (count($fields) === 0) {

@@ -100,6 +100,13 @@ export async function deleteSubcategory(id: number): Promise<void> {
   await request(`subcategories.php?_method=DELETE&id=${id}`, { method: 'POST' });
 }
 
+export async function updateSubcategory(id: number, active: boolean): Promise<{ id: number; category_id: number; name: string; active: number }> {
+  return request('subcategories.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, active }),
+  });
+}
+
 export async function fetchMovements(filters: MovementFilters = {}): Promise<PaginatedMovements> {
   const params = new URLSearchParams();
   if (filters.year) params.set('year', filters.year);

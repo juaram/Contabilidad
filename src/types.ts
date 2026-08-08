@@ -16,6 +16,7 @@ export interface Movement {
 export interface Subcategory {
   id: string;
   name: string;
+  active?: boolean;
 }
 
 export interface Category {
@@ -35,7 +36,11 @@ export interface UserPreferences {
   appTitle: string;
   appSubtitle: string;
   listFont: string; // 'sans' | 'code'
-  multiRegistro: boolean; // mostrar popup de registro múltiple al añadir ingreso
+  multiRegistro: boolean; // mostrar popup de registro múltiple al añadir ingreso o gasto
+  dropdownBg: string; // color de fondo de los desplegables
+  dropdownBorder: string; // color del borde de los desplegables
+  dropdownBorderWidth: number; // grosor del borde (px)
+  dropdownRadius: number; // radio de las esquinas (px)
 }
 
 export type BudgetType = 'gasto' | 'ingreso';

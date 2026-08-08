@@ -3,11 +3,11 @@ import http from 'node:http';
 const PORT = 8080;
 
 const categories = [
-  { id: 1, code: 'VIV', name: 'Vivienda / Hogar', icon: 'home', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 0, movement_count: 0, subcategories: [{ id: 1, category_id: 1, name: 'Luz' }, { id: 2, category_id: 1, name: 'Agua' }, { id: 3, category_id: 1, name: 'Alquiler' }] },
-  { id: 2, code: 'ALM', name: 'Alimentación', icon: 'shopping_basket', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 1, movement_count: 0, subcategories: [{ id: 4, category_id: 2, name: 'Supermercado' }, { id: 5, category_id: 2, name: 'Restaurantes' }] },
-  { id: 3, code: 'SAL', name: 'Salud', icon: 'medical_services', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 2, movement_count: 0, subcategories: [{ id: 6, category_id: 3, name: 'Farmacia' }, { id: 7, category_id: 3, name: 'Médico' }] },
-  { id: 4, code: 'ING', name: 'Pensiones e Ingresos', icon: 'savings', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 3, movement_count: 0, subcategories: [{ id: 8, category_id: 4, name: 'Pensión' }, { id: 9, category_id: 4, name: 'Otros Ingresos' }] },
-  { id: 5, code: 'VAR', name: 'Varios y Ocio', icon: 'category', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 4, movement_count: 0, subcategories: [{ id: 10, category_id: 5, name: 'Transporte' }, { id: 11, category_id: 5, name: 'Ocio' }] },
+  { id: 1, code: 'VIV', name: 'Vivienda / Hogar', icon: 'home', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 0, movement_count: 0, subcategories: [{ id: 1, category_id: 1, name: 'Luz', active: 1 }, { id: 2, category_id: 1, name: 'Agua', active: 1 }, { id: 3, category_id: 1, name: 'Alquiler', active: 1 }] },
+  { id: 2, code: 'ALM', name: 'Alimentación', icon: 'shopping_basket', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 1, movement_count: 0, subcategories: [{ id: 4, category_id: 2, name: 'Supermercado', active: 1 }, { id: 5, category_id: 2, name: 'Restaurantes', active: 1 }] },
+  { id: 3, code: 'SAL', name: 'Salud', icon: 'medical_services', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 2, movement_count: 0, subcategories: [{ id: 6, category_id: 3, name: 'Farmacia', active: 1 }, { id: 7, category_id: 3, name: 'Médico', active: 1 }] },
+  { id: 4, code: 'ING', name: 'Pensiones e Ingresos', icon: 'savings', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 3, movement_count: 0, subcategories: [{ id: 8, category_id: 4, name: 'Pensión', active: 1 }, { id: 9, category_id: 4, name: 'Otros Ingresos', active: 1 }] },
+  { id: 5, code: 'VAR', name: 'Varios y Ocio', icon: 'category', color_bg: 'bg-primary-fixed', color_text: 'text-on-primary-fixed', sort_order: 4, movement_count: 0, subcategories: [{ id: 10, category_id: 5, name: 'Transporte', active: 1 }, { id: 11, category_id: 5, name: 'Ocio', active: 1 }] },
 ];
 
 const movements = [
@@ -85,11 +85,19 @@ const routes = {
     respond(res, { message: 'Categoría eliminada' });
   },
   'POST /conta/api/subcategories.php': async (req, res) => {
-    const { category_id, name } = await parseBody(req);
+    const url = new URL(req.url, 'http://localhost');
+    const data = await parseBody(req);
+    if (url.searchParams.get('_method') === 'PUT') {
+      const sub = subMap[data.id];
+      if (!sub) return respond(res, { error: 'Subcategoría no encontrada' }, 404);
+      sub.active = data.active ? 1 : 0;
+      return respond(res, sub);
+    }
+    const { category_id, name } = data;
     const cat = categories.find(c => c.id === category_id);
     if (!cat) return respond(res, { error: 'Categoría no existe' }, 404);
     const id = Math.max(...Object.keys(subMap).map(Number), 0) + 1;
-    const sub = { id, category_id, name };
+    const sub = { id, category_id, name, active: 1 };
     subMap[id] = sub;
     cat.subcategories.push(sub);
     respond(res, sub, 201);
@@ -127,6 +135,9 @@ const routes = {
       return respond(res, { ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, subcategory: subMap[m.subcategory_id]?.name || '' });
     }
     const id = Math.max(...movements.map(m => m.id), 0) + 1;
+    if (data.subcategory_id && subMap[data.subcategory_id] && subMap[data.subcategory_id].active !== 1) {
+      return respond(res, { error: 'La subcategoría seleccionada está desactivada y no puede utilizarse para crear movimientos' }, 400);
+    }
     const m = { id, date: data.date, category_id: data.category_id, subcategory_id: data.subcategory_id || null, description: data.description, type: data.type, amount: data.amount };
     movements.unshift(m);
     respond(res, { ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, subcategory: subMap[m.subcategory_id]?.name || '' }, 201);
@@ -148,7 +159,7 @@ const routes = {
       last_movements: movements.slice(0, 3).map(m => ({ ...m, category: catMap[m.category_id]?.name, category_code: catMap[m.category_id]?.code, category_icon: catMap[m.category_id]?.icon, subcategory: subMap[m.subcategory_id]?.name || '' }))
     });
   },
-  'GET /conta/api/preferences.php': (req, res) => respond(res, { id: 1, currency: 'Euro (€) - EUR', date_format: 'DD / MM / AAAA (31/12/2024)', high_contrast: 0, app_title: 'Mis Cuentas', app_subtitle: 'Control Financiero', list_font: 'sans', multi_registro: 1 }),
+  'GET /conta/api/preferences.php': (req, res) => respond(res, { id: 1, currency: 'Euro (€) - EUR', date_format: 'DD / MM / AAAA (31/12/2024)', high_contrast: 0, app_title: 'Mis Cuentas', app_subtitle: 'Control Financiero', list_font: 'sans', multi_registro: 1, dropdown_bg: '#bfdbfe', dropdown_border: '#93c5fd', dropdown_border_width: 2, dropdown_radius: 12 }),
   'PUT /conta/api/preferences.php': async (req, res) => respond(res, { id: 1, ...await parseBody(req) }),
   'GET /conta/api/budgets.php': (req, res) => {
     const url = new URL(req.url, 'http://localhost');
@@ -253,9 +264,11 @@ const routes = {
       let desc = m.description;
       if (final_description.trim()) {
         desc = final_description;
-        if (desc.includes('#mes')) {
+        if (desc.includes('#mes') || desc.includes('#año')) {
           const monthNum = parseInt(m.date.slice(5, 7), 10);
+          const yearNum = parseInt(m.date.slice(0, 4), 10);
           desc = desc.replace(/#mes/g, monthLiterals[monthNum] || '');
+          desc = desc.replace(/#año/g, String(yearNum));
         }
       }
       m.category_id = finalPair.cat.id;

@@ -133,6 +133,8 @@ function createMovement(): void
 {
     global $pdo;
 
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "subcategories ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER name"); } catch (PDOException $e) { }
+
     $input = getInput();
     $date = trim($input['date'] ?? '');
     $categoryId = (int) ($input['category_id'] ?? 0);
@@ -146,6 +148,14 @@ function createMovement(): void
     }
     if ($categoryId <= 0) {
         jsonError('La categoría es obligatoria');
+    }
+    if ($subcategoryId !== null && $subcategoryId > 0) {
+        $stmt = $pdo->prepare("SELECT active FROM " . TABLE_PREFIX . "subcategories WHERE id = :id");
+        $stmt->execute([':id' => $subcategoryId]);
+        $sub = $stmt->fetch();
+        if (!$sub || (int) $sub['active'] !== 1) {
+            jsonError('La subcategoría seleccionada está desactivada y no puede utilizarse para crear movimientos');
+        }
     }
     if ($description === '') {
         jsonError('La descripción es obligatoria');

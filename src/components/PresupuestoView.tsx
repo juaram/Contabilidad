@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Budget, BudgetType, Category, Movement, UserPreferences } from '../types';
 import { actualForPeriod } from '../budgetUtils';
 import { NuevoPresupuestoModal } from './NuevoPresupuestoModal';
+import { SelectorList } from './SelectorList';
 import { CategoryIcon } from './CategoryIcon';
 import { categoryColorStyle } from '../categoryColors';
 
@@ -279,30 +280,20 @@ export const PresupuestoView: React.FC<PresupuestoViewProps> = ({
             </div>
 
             {/* Year Selector */}
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-27.5 cursor-pointer shrink-0"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <SelectorList
+              value={String(selectedYear)}
+              onChange={(v) => setSelectedYear(Number(v))}
+              options={availableYears.map((year) => ({ value: String(year), label: String(year) }))}
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-27.5 shrink-0"
+            />
 
             {/* Period Selector */}
-            <select
+            <SelectorList
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-37.5 cursor-pointer shrink-0"
-            >
-              {PERIODS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedMonth(v)}
+              options={PERIODS.map((p) => ({ value: p.value, label: p.label }))}
+              className="h-10 px-3 bg-white border-2 border-outline-variant font-medium text-sm rounded-lg focus:border-primary outline-none min-w-37.5 shrink-0"
+            />
 
             <button
               onClick={() => handleOpenNew()}

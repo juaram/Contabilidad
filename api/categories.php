@@ -35,6 +35,7 @@ function getCategories(): void
 
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "categories MODIFY icon VARCHAR(255) NOT NULL DEFAULT 'category'"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "categories ADD COLUMN sort_order INT UNSIGNED NOT NULL DEFAULT 0 AFTER color_text"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "subcategories ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER name"); } catch (PDOException $e) { }
 
     $stmt = $pdo->query("
         SELECT c.*, 
@@ -52,6 +53,9 @@ function getCategories(): void
 
     $subByCategory = [];
     foreach ($subcategories as $sub) {
+        $sub['id'] = (int) $sub['id'];
+        $sub['category_id'] = (int) $sub['category_id'];
+        $sub['active'] = (int) ($sub['active'] ?? 1);
         $subByCategory[$sub['category_id']][] = $sub;
     }
 

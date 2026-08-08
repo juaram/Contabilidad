@@ -4,6 +4,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { categoryColorStyle } from '../categoryColors';
 import { MantenimientoMovimientos } from './MantenimientoMovimientos';
 import { CorreccionOrtografica } from './CorreccionOrtografica';
+import { SelectorList } from './SelectorList';
 
 interface AjustesViewProps {
   categories: Category[];
@@ -15,6 +16,7 @@ interface AjustesViewProps {
   onOpenEditCategoryModal: (category: Category) => void;
   onOpenAddSubcategoryModal: (categoryName: string) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
+  onToggleSubcategory: (categoryId: string, subcategoryId: string) => void;
   onDeleteCategory: (categoryId: string) => void;
   onReorderCategories: (orderedIds: string[]) => void;
   onExportData: (type: 'pdf' | 'excel') => void;
@@ -48,6 +50,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
   onOpenEditCategoryModal,
   onOpenAddSubcategoryModal,
   onDeleteSubcategory,
+  onToggleSubcategory,
   onDeleteCategory,
   onReorderCategories,
   onExportData,
@@ -171,28 +174,30 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                 {/* Currency */}
                 <div className="flex flex-col gap-2">
                   <label className="font-semibold text-base text-on-surface-variant">Moneda principal</label>
-                  <select
+                  <SelectorList
                     value={preferences.currency}
-                    onChange={(e) => onUpdatePreferences({ currency: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option>Euro (€) - EUR</option>
-                    <option>Dólar ($) - USD</option>
-                    <option>Libra (£) - GBP</option>
-                  </select>
+                    onChange={(v) => onUpdatePreferences({ currency: v })}
+                    options={[
+                      { value: 'Euro (€) - EUR', label: 'Euro (€) - EUR' },
+                      { value: 'Dólar ($) - USD', label: 'Dólar ($) - USD' },
+                      { value: 'Libra (£) - GBP', label: 'Libra (£) - GBP' },
+                    ]}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                  />
                 </div>
 
                 {/* Date Format */}
                 <div className="flex flex-col gap-2">
                   <label className="font-semibold text-base text-on-surface-variant">Formato de Fecha</label>
-                  <select
+                  <SelectorList
                     value={preferences.dateFormat}
-                    onChange={(e) => onUpdatePreferences({ dateFormat: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option>DD / MM / AAAA (31/12/2024)</option>
-                    <option>DD de Mes de AAAA</option>
-                  </select>
+                    onChange={(v) => onUpdatePreferences({ dateFormat: v })}
+                    options={[
+                      { value: 'DD / MM / AAAA (31/12/2024)', label: 'DD / MM / AAAA (31/12/2024)' },
+                      { value: 'DD de Mes de AAAA', label: 'DD de Mes de AAAA' },
+                    ]}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                  />
                 </div>
 
                 {/* High Contrast Toggle */}
@@ -262,7 +267,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="font-bold text-base text-on-surface">Registros múltiples</span>
-                    <span className="font-medium text-sm text-on-surface-variant">Permitir añadir varios registros al añadir un ingreso</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Permitir añadir varios registros al añadir un ingreso o un gasto</span>
                   </div>
                   <button
                     onClick={() => onUpdatePreferences({ multiRegistro: !preferences.multiRegistro })}
@@ -281,14 +286,107 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                 {/* Registro List Font */}
                 <div className="flex flex-col gap-2 border-t border-outline-variant/60 pt-4">
                   <label className="font-semibold text-base text-on-surface-variant">Fuente del listado de Registro</label>
-                  <select
+                  <SelectorList
                     value={preferences.listFont}
-                    onChange={(e) => onUpdatePreferences({ listFont: e.target.value })}
-                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface focus:border-primary outline-none cursor-pointer"
-                  >
-                    <option value="sans">Inter (actual)</option>
-                    <option value="code">Camingo Code</option>
-                  </select>
+                    onChange={(v) => onUpdatePreferences({ listFont: v })}
+                    options={[
+                      { value: 'sans', label: 'Inter (actual)' },
+                      { value: 'code', label: 'Camingo Code' },
+                    ]}
+                    className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-lowest border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-surface-container-high p-4 md:p-stack-md border-b-2 border-outline-variant flex items-center justify-between">
+                <h3 className="font-bold text-xl md:text-2xl text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">palette</span>
+                  <span>Preferencias Desplegables</span>
+                </h3>
+              </div>
+
+              <div className="p-4 md:p-stack-md flex flex-col gap-6">
+                <p className="text-xs font-medium text-on-surface-variant">
+                  Configura el aspecto de los desplegables de la aplicación (calendarios, año, mes, categoría, subcategoría, sugerencias de descripción, …).
+                </p>
+
+                {/* Preview */}
+                <div
+                  style={{
+                    backgroundColor: preferences.dropdownBg,
+                    borderColor: preferences.dropdownBorder,
+                    borderWidth: preferences.dropdownBorderWidth,
+                    borderRadius: preferences.dropdownRadius,
+                    borderStyle: 'solid',
+                  }}
+                  className="overflow-hidden"
+                >
+                  {['Opción elegida', 'Otra opción', 'Última opción'].map((opt, idx) => (
+                    <div
+                      key={opt}
+                      className={`px-4 py-2.5 font-medium text-base ${
+                        idx === 0
+                          ? 'font-bold'
+                          : 'hover:bg-black/10'
+                      }`}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Colores */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-base text-on-surface-variant">Color de fondo</label>
+                    <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
+                      <input
+                        type="color"
+                        value={preferences.dropdownBg || '#bfdbfe'}
+                        onChange={(e) => onUpdatePreferences({ dropdownBg: e.target.value })}
+                        className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <span className="text-sm text-on-surface-variant">{preferences.dropdownBg || '#bfdbfe'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-base text-on-surface-variant">Color del borde</label>
+                    <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
+                      <input
+                        type="color"
+                        value={preferences.dropdownBorder || '#93c5fd'}
+                        onChange={(e) => onUpdatePreferences({ dropdownBorder: e.target.value })}
+                        className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <span className="text-sm text-on-surface-variant">{preferences.dropdownBorder || '#93c5fd'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grosor y radio */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-base text-on-surface-variant">Grosor del borde</label>
+                    <SelectorList
+                      value={String(preferences.dropdownBorderWidth ?? 2)}
+                      onChange={(v) => onUpdatePreferences({ dropdownBorderWidth: Number(v) })}
+                      options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n} px` }))}
+                      className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-base text-on-surface-variant">Radio de las esquinas</label>
+                    <SelectorList
+                      value={String(preferences.dropdownRadius ?? 12)}
+                      onChange={(v) => onUpdatePreferences({ dropdownRadius: Number(v) })}
+                      options={[0, 4, 8, 12, 16, 20, 24].map((n) => ({ value: String(n), label: `${n} px` }))}
+                      className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -457,7 +555,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                               {cat.name}
                             </span>
                             <p className="font-medium text-sm text-on-surface-variant">
-                              {cat.subcategories.length} subcategorías activas
+                              {cat.subcategories.filter((s) => s.active !== false).length} subcategorías activas
                             </p>
                           </div>
                         </button>
@@ -507,23 +605,45 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                           {cat.subcategories.length === 0 ? (
                             <p className="text-sm text-on-surface-variant py-2 italic">Sin subcategorías.</p>
                           ) : (
-                            cat.subcategories.map((sub) => (
-                              <div
-                                key={sub.id}
-                                className="flex items-center justify-between py-3 border-b border-outline-variant/60"
-                              >
-                                <span className="font-medium text-lg text-on-surface">{sub.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => onDeleteSubcategory(cat.id, sub.id)}
-                                    title="Eliminar subcategoría"
-                                    className="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">close</span>
-                                  </button>
+                            cat.subcategories.map((sub) => {
+                              const isActive = sub.active !== false;
+                              return (
+                                <div
+                                  key={sub.id}
+                                  className={`flex items-center justify-between py-3 border-b border-outline-variant/60 ${isActive ? '' : 'opacity-50'}`}
+                                >
+                                  <div className="flex flex-col min-w-0">
+                                    <span className={`font-medium text-lg ${isActive ? 'text-on-surface' : 'text-on-surface-variant line-through decoration-outline'}`}>{sub.name}</span>
+                                    <span className="text-xs font-medium text-on-surface-variant">
+                                      {isActive ? 'Activa' : 'Desactivada'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    <button
+                                      onClick={() => onToggleSubcategory(cat.id, sub.id)}
+                                      title={isActive ? 'Desactivar subcategoría' : 'Activar subcategoría'}
+                                      aria-pressed={isActive}
+                                      className={`w-14 h-7 rounded-full relative transition-colors duration-300 cursor-pointer ${
+                                        isActive ? 'bg-secondary' : 'bg-outline-variant'
+                                      }`}
+                                    >
+                                      <div
+                                        className={`absolute top-0.5 left-0.5 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
+                                          isActive ? 'translate-x-7' : 'translate-x-0'
+                                        }`}
+                                      />
+                                    </button>
+                                    <button
+                                      onClick={() => onDeleteSubcategory(cat.id, sub.id)}
+                                      title="Eliminar subcategoría"
+                                      className="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer"
+                                    >
+                                      <span className="material-symbols-outlined text-[20px]">close</span>
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))
+                              );
+                            })
                           )}
 
                           <button

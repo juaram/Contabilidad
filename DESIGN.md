@@ -199,7 +199,7 @@ Para actualizaciones masivas de movimientos se usa una tabla de reglas. Cada fil
 - **Filtro Categoría / Filtro Subcategoría**: coincidencia exacta por nombre.
 - **Filtro descripción**: opcional. Si se omite, se seleccionan todos los movimientos de la categoría/subcategoría inicial. Si se indica, admite varias alternativas separadas por `OR` (insensible a mayúsculas) y cada una usa `*` como comodín: `*luz* OR *repsol*` busca descripciones que contengan "luz" o "repsol".
 - **Categoría final / Subcategoría final**: nombre destino. Se resuelven a sus IDs en BD; si la subcategoría no existe en la categoría final se crea automáticamente.
-- **Descripción final**: opcional. Si se omite, se conserva la descripción original. Si se indica, se sustituye; el marcador `#mes` se reemplaza por el literal del mes de la fecha del movimiento (enero, febrero, …).
+- **Descripción final**: opcional. Si se omite, se conserva la descripción original. Si se indica, se sustituye; el marcador `#mes` se reemplaza por el literal del mes de la fecha del movimiento (enero, febrero, …) y `#año` por el número del año del movimiento (2026).
 
 ### Endpoint
 

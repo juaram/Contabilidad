@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Budget, Category, Movement, UserPreferences } from '../types';
 import { actualForPeriod, budgetForPeriod } from '../budgetUtils';
 import { ConfirmarEliminarModal } from './ConfirmarEliminarModal';
+import { SelectorList } from './SelectorList';
 import { categoryColorStyle } from '../categoryColors';
 
 const formatAmount = (value: number): string => {
@@ -215,82 +216,62 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
             </button>
 
             {/* Year Selector */}
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-32.5 cursor-pointer shrink-0 ${filterBorderClass(
-                selectedYear !== new Date().getFullYear(),
-              )}`}
-            >
-              <option value={0}>Años (Todos)</option>
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <SelectorList
+              value={String(selectedYear)}
+              onChange={(v) => setSelectedYear(Number(v))}
+              options={[
+                { value: '0', label: 'Años (Todos)' },
+                ...availableYears.map((year) => ({ value: String(year), label: String(year) })),
+              ]}
+              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg min-w-32.5 shrink-0 ${filterBorderClass(selectedYear !== new Date().getFullYear())}`}
+            />
 
             {/* Month Selector */}
-            <select
+            <SelectorList
               value={selectedMonth}
-              onChange={(e) => {
-                setSelectedMonth(e.target.value);
-              }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-32.5 cursor-pointer shrink-0 ${filterBorderClass(
-                selectedMonth !== 'todos',
-              )}`}
-            >
-              <option value="todos">Meses (Todos)</option>
-              <option value="01">Enero</option>
-              <option value="02">Febrero</option>
-              <option value="03">Marzo</option>
-              <option value="04">Abril</option>
-              <option value="05">Mayo</option>
-              <option value="06">Junio</option>
-              <option value="07">Julio</option>
-              <option value="08">Agosto</option>
-              <option value="09">Septiembre</option>
-              <option value="10">Octubre</option>
-              <option value="11">Noviembre</option>
-              <option value="12">Diciembre</option>
-            </select>
+              onChange={(v) => setSelectedMonth(v)}
+              options={[
+                { value: 'todos', label: 'Meses (Todos)' },
+                { value: '01', label: 'Enero' },
+                { value: '02', label: 'Febrero' },
+                { value: '03', label: 'Marzo' },
+                { value: '04', label: 'Abril' },
+                { value: '05', label: 'Mayo' },
+                { value: '06', label: 'Junio' },
+                { value: '07', label: 'Julio' },
+                { value: '08', label: 'Agosto' },
+                { value: '09', label: 'Septiembre' },
+                { value: '10', label: 'Octubre' },
+                { value: '11', label: 'Noviembre' },
+                { value: '12', label: 'Diciembre' },
+              ]}
+              className={`h-10 px-3.5 bg-white font-medium text-sm rounded-lg min-w-32.5 shrink-0 ${filterBorderClass(selectedMonth !== 'todos')}`}
+            />
 
             {/* Category Filter */}
-            <select
+            <SelectorList
               value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
+              onChange={(v) => {
+                setSelectedCategory(v);
                 setSelectedSubcategory('todas');
               }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-35 cursor-pointer shrink-0 ${filterBorderClass(
-                selectedCategory !== 'todas',
-              )}`}
-            >
-              <option value="todas">Categoría (Todas)</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: 'todas', label: 'Categoría (Todas)' },
+                ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+              ]}
+              className={`h-10 px-3.5 bg-white font-medium text-sm rounded-lg min-w-35 shrink-0 ${filterBorderClass(selectedCategory !== 'todas')}`}
+            />
 
             {/* Subcategory Filter */}
-            <select
+            <SelectorList
               value={selectedSubcategory}
-              onChange={(e) => {
-                setSelectedSubcategory(e.target.value);
-              }}
-              className={`h-10 px-3 bg-white font-medium text-sm rounded-lg outline-none min-w-35 cursor-pointer shrink-0 ${filterBorderClass(
-                selectedSubcategory !== 'todas',
-              )}`}
-            >
-              <option value="todas">Subcategoría (Todas)</option>
-              {availableSubcategories.map((sub) => (
-                <option key={sub.id} value={sub.name}>
-                  {sub.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedSubcategory(v)}
+              options={[
+                { value: 'todas', label: 'Subcategoría (Todas)' },
+                ...availableSubcategories.map((sub) => ({ value: sub.name, label: sub.name })),
+              ]}
+              className={`h-10 px-3.5 bg-white font-medium text-sm rounded-lg min-w-35 shrink-0 ${filterBorderClass(selectedSubcategory !== 'todas')}`}
+            />
 
             {/* Search Bar — takes remaining space */}
             <div className="relative flex-1 min-w-55">
@@ -411,7 +392,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                         onClick={() => setHighlightedRowId(mov.id)}
                         className={`transition-colors cursor-pointer group select-none ${
                           isSelected
-                            ? 'bg-primary-container text-on-primary-container font-medium'
+                            ? 'bg-blue-900 text-on-primary font-medium'
                             : 'hover:bg-surface-container-low text-on-surface'
                         }`}
                       >

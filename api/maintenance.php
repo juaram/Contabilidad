@@ -130,9 +130,11 @@ try {
         $desc = $m['description'];
         if ($finalDescription !== '') {
             $desc = $finalDescription;
-            if (strpos($desc, '#mes') !== false) {
+            if (strpos($desc, '#mes') !== false || strpos($desc, '#año') !== false) {
                 $monthNum = (int) date('n', strtotime($m['date']));
+                $yearNum = (int) date('Y', strtotime($m['date']));
                 $desc = str_replace('#mes', $monthLiterals[$monthNum] ?? '', $desc);
+                $desc = str_replace('#año', (string) $yearNum, $desc);
             }
         }
         $updateStmt->execute([

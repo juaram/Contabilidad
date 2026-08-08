@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Category } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { SelectorList } from './SelectorList';
 import {
   categoryBackgroundColor,
   categoryColorStyle,
@@ -142,23 +143,20 @@ export const NuevaCategoriaModal: React.FC<NuevaCategoriaModalProps> = ({
                 <label className="block font-semibold text-base text-on-surface">Iconos rápidos</label>
                 <div className="flex items-center gap-3 bg-surface border-2 border-outline-variant rounded-xl px-4 focus-within:border-primary transition-colors">
                   <CategoryIcon icon={icon} className="text-[22px] shrink-0" imgClassName="w-5 h-5" />
-                  <select
+                  <SelectorList
                     value={icon}
-                    onChange={(e) => {
-                      setIcon(e.target.value);
+                    onChange={(v) => {
+                      setIcon(v);
                       setIconUrl('');
                     }}
-                    className="w-full h-14 bg-transparent outline-none font-medium text-lg cursor-pointer text-on-surface"
-                  >
-                    {!PRESET_ICONS.some((p) => p.value === icon) && (
-                      <option value={icon}>Icono actual</option>
-                    )}
-                    {PRESET_ICONS.map((preset) => (
-                      <option key={preset.value} value={preset.value}>
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      ...(!PRESET_ICONS.some((p) => p.value === icon)
+                        ? [{ value: icon, label: 'Icono actual' }]
+                        : []),
+                      ...PRESET_ICONS.map((preset) => ({ value: preset.value, label: preset.name })),
+                    ]}
+                    className="w-full h-14 bg-transparent font-medium text-lg"
+                  />
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Category } from '../types';
 import { runMaintenance, MaintenancePreviewItem } from '../api';
+import { SelectorList } from './SelectorList';
 
 interface MantenimientoMovimientosProps {
   categories: Category[];
@@ -113,27 +114,25 @@ export const MantenimientoMovimientos: React.FC<MantenimientoMovimientosProps> =
 
             <div className="flex flex-col gap-2">
               <label className="font-semibold text-base text-on-surface-variant">Categoría inicial</label>
-              <select
+              <SelectorList
                 value={filterCategoryId}
-                onChange={(e) => { setFilterCategoryId(e.target.value); setFilterSubcategoryId(''); resetPreview(); }}
+                onChange={(v) => { setFilterCategoryId(v); setFilterSubcategoryId(''); resetPreview(); }}
+                placeholder="Selecciona categoría"
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
                 className={inputClass}
-              >
-                <option value="">Selecciona categoría</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              />
             </div>
 
             <div className="flex flex-col gap-2">
               <label className="font-semibold text-base text-on-surface-variant">Subcategoría inicial</label>
-              <select
+              <SelectorList
                 value={filterSubcategoryId}
-                onChange={(e) => { setFilterSubcategoryId(e.target.value); resetPreview(); }}
+                onChange={(v) => { setFilterSubcategoryId(v); resetPreview(); }}
                 disabled={!filterCategory}
+                placeholder="Selecciona subcategoría"
+                options={(filterCategory?.subcategories ?? []).map((s) => ({ value: s.id, label: s.name }))}
                 className={inputClass}
-              >
-                <option value="">Selecciona subcategoría</option>
-                {filterCategory?.subcategories.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -159,14 +158,13 @@ export const MantenimientoMovimientos: React.FC<MantenimientoMovimientosProps> =
 
             <div className="flex flex-col gap-2">
               <label className="font-semibold text-base text-on-surface-variant">Categoría final</label>
-              <select
+              <SelectorList
                 value={finalCategoryId}
-                onChange={(e) => { setFinalCategoryId(e.target.value); setFinalSubcategory(''); resetPreview(); }}
+                onChange={(v) => { setFinalCategoryId(v); setFinalSubcategory(''); resetPreview(); }}
+                placeholder="Selecciona categoría"
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
                 className={inputClass}
-              >
-                <option value="">Selecciona categoría</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -186,7 +184,7 @@ export const MantenimientoMovimientos: React.FC<MantenimientoMovimientosProps> =
 
             <div className="flex flex-col gap-2">
               <label className="font-semibold text-base text-on-surface-variant">
-                Descripción final <span className="font-normal">— opcional, admite <code className="font-mono">#mes</code></span>
+                Descripción final <span className="font-normal">— opcional, admite <code className="font-mono">#mes</code> y <code className="font-mono">#año</code></span>
               </label>
               <input
                 type="text"

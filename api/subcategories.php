@@ -12,6 +12,9 @@ switch ($method) {
     case 'POST':
         createSubcategory();
         break;
+    case 'PUT':
+        updateSubcategory();
+        break;
     case 'DELETE':
         deleteSubcategory();
         break;
@@ -19,9 +22,17 @@ switch ($method) {
         jsonError('Método no permitido', 405);
 }
 
+function ensureActiveColumn(): void
+{
+    global $pdo;
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "subcategories ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER name"); } catch (PDOException $e) { }
+}
+
 function createSubcategory(): void
 {
     global $pdo;
+
+    ensureActiveColumn();
 
     $input = getInput();
     $categoryId = (int) ($input['category_id'] ?? 0);
@@ -53,8 +64,45 @@ function createSubcategory(): void
     $sub = $stmt->fetch();
     $sub['id'] = (int) $sub['id'];
     $sub['category_id'] = (int) $sub['category_id'];
+    $sub['active'] = (int) ($sub['active'] ?? 1);
 
     jsonResponse($sub, 201);
+}
+
+function updateSubcategory(): void
+{
+    global $pdo;
+
+    ensureActiveColumn();
+
+    $input = getInput();
+    $id = (int) ($input['id'] ?? 0);
+    $active = isset($input['active']) ? (int) $input['active'] : null;
+
+    if ($id <= 0) {
+        jsonError('ID de subcategoría no válido');
+    }
+
+    if ($active === null) {
+        jsonError('Debe indicar el estado activo/inactivo de la subcategoría');
+    }
+
+    $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "subcategories SET active = :active WHERE id = :id");
+    $stmt->execute([':active' => $active ? 1 : 0, ':id' => $id]);
+
+    $stmt = $pdo->prepare("SELECT * FROM " . TABLE_PREFIX . "subcategories WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $sub = $stmt->fetch();
+
+    if (!$sub) {
+        jsonError('Subcategoría no encontrada', 404);
+    }
+
+    $sub['id'] = (int) $sub['id'];
+    $sub['category_id'] = (int) $sub['category_id'];
+    $sub['active'] = (int) ($sub['active'] ?? 1);
+
+    jsonResponse($sub);
 }
 
 function deleteSubcategory(): void

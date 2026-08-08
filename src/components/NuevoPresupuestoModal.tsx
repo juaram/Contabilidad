@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Budget, BudgetType, Category, Movement } from '../types';
 import { suggestBudgetAmount } from '../budgetUtils';
+import { SelectorList } from './SelectorList';
 
 interface NuevoPresupuestoModalProps {
   isOpen: boolean;
@@ -188,34 +189,24 @@ export const NuevoPresupuestoModal: React.FC<NuevoPresupuestoModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Categoría</label>
-              <select
+              <SelectorList
                 value={categoryCode}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                <option value="">Elegir uno</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+                onChange={handleCategoryChange}
+                placeholder="Elegir uno"
+                options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
             </div>
 
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Subcategoría</label>
-              <select
+              <SelectorList
                 value={subcategoryId}
-                onChange={(e) => { setSubcategoryId(e.target.value); setError(''); }}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                <option value="">Toda la categoría</option>
-                {selectedCat?.subcategories.map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => { setSubcategoryId(v); setError(''); }}
+                placeholder="Toda la categoría"
+                options={(selectedCat?.subcategories ?? []).map((sub) => ({ value: sub.id, label: sub.name }))}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
             </div>
           </div>
 
@@ -223,29 +214,25 @@ export const NuevoPresupuestoModal: React.FC<NuevoPresupuestoModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Año</label>
-              <select
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
+              <SelectorList
+                value={String(year)}
+                onChange={(v) => setYear(Number(v))}
+                options={availableYears.map((y) => ({ value: String(y), label: String(y) }))}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
             </div>
 
             <div className="space-y-1">
               <label className="block font-semibold text-base text-on-surface">Periodo</label>
-              <select
+              <SelectorList
                 value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary focus:outline-none font-medium text-base cursor-pointer"
-              >
-                <option value="00">Recurrente (todos los meses)</option>
-                <option value="13">Anual</option>
-              </select>
+                onChange={setMonth}
+                options={[
+                  { value: '00', label: 'Recurrente (todos los meses)' },
+                  { value: '13', label: 'Anual' },
+                ]}
+                className="w-full h-14 px-4 bg-surface border-2 border-outline-variant rounded-xl focus:border-primary font-medium text-base"
+              />
               <p className="text-xs font-medium text-on-surface-variant">
                 {month === '13'
                   ? 'El importe introducido es el total único para todo el año.'
