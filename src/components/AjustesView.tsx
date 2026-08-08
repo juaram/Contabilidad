@@ -296,6 +296,46 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
                   />
                 </div>
+
+                {/* Show Description Column Toggle */}
+                <div className="flex items-center justify-between border-t border-outline-variant/60 pt-4">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-base text-on-surface">Mostrar columna Descripción</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Mostrar u ocultar la columna Descripción en el listado de Registro</span>
+                  </div>
+                  <button
+                    onClick={() => onUpdatePreferences({ showDescription: !preferences.showDescription })}
+                    className={`w-16 h-8 rounded-full relative transition-colors duration-300 cursor-pointer ${
+                      preferences.showDescription ? 'bg-secondary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
+                        preferences.showDescription ? 'translate-x-8' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Show Balance Column Toggle */}
+                <div className="flex items-center justify-between border-t border-outline-variant/60 pt-4">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-base text-on-surface">Mostrar columna Saldo</span>
+                    <span className="font-medium text-sm text-on-surface-variant">Mostrar u ocultar la columna Saldo en el listado de Registro</span>
+                  </div>
+                  <button
+                    onClick={() => onUpdatePreferences({ showBalance: !preferences.showBalance })}
+                    className={`w-16 h-8 rounded-full relative transition-colors duration-300 cursor-pointer ${
+                      preferences.showBalance ? 'bg-secondary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${
+                        preferences.showBalance ? 'translate-x-8' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -319,6 +359,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     borderColor: preferences.dropdownBorder,
                     borderWidth: preferences.dropdownBorderWidth,
                     borderRadius: preferences.dropdownRadius,
+                    color: preferences.dropdownTextColor,
                     borderStyle: 'solid',
                   }}
                   className="overflow-hidden"
@@ -326,7 +367,8 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   {['Opción elegida', 'Otra opción', 'Última opción'].map((opt, idx) => (
                     <div
                       key={opt}
-                      className={`px-4 py-2.5 font-medium text-base ${
+                      style={{ height: preferences.dropdownRowHeight ?? 44 }}
+                      className={`flex items-center px-4 font-medium text-base ${
                         idx === 0
                           ? 'font-bold'
                           : 'hover:bg-black/10'
@@ -337,55 +379,81 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                   ))}
                 </div>
 
-                {/* Colores */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-base text-on-surface-variant">Color de fondo</label>
-                    <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
-                      <input
-                        type="color"
-                        value={preferences.dropdownBg || '#bfdbfe'}
-                        onChange={(e) => onUpdatePreferences({ dropdownBg: e.target.value })}
-                        className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
-                      />
-                      <span className="text-sm text-on-surface-variant">{preferences.dropdownBg || '#bfdbfe'}</span>
+                {/* Opciones de aspecto: dos columnas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Columna 1: colores */}
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Color del texto</label>
+                      <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
+                        <input
+                          type="color"
+                          value={preferences.dropdownTextColor || '#1f2937'}
+                          onChange={(e) => onUpdatePreferences({ dropdownTextColor: e.target.value })}
+                          className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                        />
+                        <span className="text-sm text-on-surface-variant">{preferences.dropdownTextColor || '#1f2937'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Color de fondo</label>
+                      <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
+                        <input
+                          type="color"
+                          value={preferences.dropdownBg || '#bfdbfe'}
+                          onChange={(e) => onUpdatePreferences({ dropdownBg: e.target.value })}
+                          className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                        />
+                        <span className="text-sm text-on-surface-variant">{preferences.dropdownBg || '#bfdbfe'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Color del borde</label>
+                      <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
+                        <input
+                          type="color"
+                          value={preferences.dropdownBorder || '#93c5fd'}
+                          onChange={(e) => onUpdatePreferences({ dropdownBorder: e.target.value })}
+                          className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                        />
+                        <span className="text-sm text-on-surface-variant">{preferences.dropdownBorder || '#93c5fd'}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-base text-on-surface-variant">Color del borde</label>
-                    <div className="flex items-center gap-2 h-14 px-3 border-2 border-outline rounded-lg bg-surface">
-                      <input
-                        type="color"
-                        value={preferences.dropdownBorder || '#93c5fd'}
-                        onChange={(e) => onUpdatePreferences({ dropdownBorder: e.target.value })}
-                        className="h-8 w-10 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                  {/* Columna 2: medidas */}
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Altura de la línea</label>
+                      <SelectorList
+                        value={String(preferences.dropdownRowHeight ?? 44)}
+                        onChange={(v) => onUpdatePreferences({ dropdownRowHeight: Number(v) })}
+                        options={[32, 36, 40, 44, 48, 56, 64].map((n) => ({ value: String(n), label: `${n} px` }))}
+                        className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
                       />
-                      <span className="text-sm text-on-surface-variant">{preferences.dropdownBorder || '#93c5fd'}</span>
                     </div>
-                  </div>
-                </div>
 
-                {/* Grosor y radio */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-base text-on-surface-variant">Grosor del borde</label>
-                    <SelectorList
-                      value={String(preferences.dropdownBorderWidth ?? 2)}
-                      onChange={(v) => onUpdatePreferences({ dropdownBorderWidth: Number(v) })}
-                      options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n} px` }))}
-                      className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
-                    />
-                  </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Grosor del borde</label>
+                      <SelectorList
+                        value={String(preferences.dropdownBorderWidth ?? 2)}
+                        onChange={(v) => onUpdatePreferences({ dropdownBorderWidth: Number(v) })}
+                        options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n} px` }))}
+                        className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-base text-on-surface-variant">Radio de las esquinas</label>
-                    <SelectorList
-                      value={String(preferences.dropdownRadius ?? 12)}
-                      onChange={(v) => onUpdatePreferences({ dropdownRadius: Number(v) })}
-                      options={[0, 4, 8, 12, 16, 20, 24].map((n) => ({ value: String(n), label: `${n} px` }))}
-                      className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-base text-on-surface-variant">Radio de las esquinas</label>
+                      <SelectorList
+                        value={String(preferences.dropdownRadius ?? 12)}
+                        onChange={(v) => onUpdatePreferences({ dropdownRadius: Number(v) })}
+                        options={[0, 4, 8, 12, 16, 20, 24].map((n) => ({ value: String(n), label: `${n} px` }))}
+                        className="w-full h-14 px-4 font-normal text-lg border-2 border-outline rounded-lg bg-surface"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

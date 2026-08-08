@@ -3,12 +3,37 @@
 if (file_exists(__DIR__ . '/config.local.php')) {
     require __DIR__ . '/config.local.php';
 } else {
-    define('DB_HOST', 'POAPMYSQL143.dns-servicio.com');
-    define('DB_PORT', 3306);
-    define('DB_NAME', '8600814_compartida');
-    define('DB_USER', '8600814_usuario');
-    define('DB_PASS', '7Ps3u&iJuvO#5jvp');
+    $host = strtolower(trim($_SERVER['HTTP_HOST'] ?? ''));
+    $host = preg_replace('/^www\./', '', $host);
+    $host = explode(':', $host)[0];
 
+    // Mapa de bases de datos por dominio en producción.
+    // Cada dominio despliega su propia instalación y usa su propia base de datos.
+    $domains = [
+        'jramirez.eu' => [
+            'host' => 'POAPMYSQL143.dns-servicio.com',
+            'port' => 3306,
+            'db' => '8600814_compartida',
+            'user' => '8600814_usuario',
+            'pass' => '7Ps3u&iJuvO#5jvp',
+        ],
+'twinbrosburger.com' => [
+            'host' => 'PMYSQL170.dns-servicio.com',
+            'port' => 3306,
+            'db' => '9903378_conta',
+            'user' => '9903378_usuario',
+            'pass' => '7Ps3u&iJuvO#5jvp',
+        ],
+    ];
+
+    // Dominio desconocido (p. ej. localhost/127.0.0.1 sin config.local.php) → jramirez.eu por defecto.
+    $cfg = $domains[$host] ?? $domains['jramirez.eu'];
+
+    define('DB_HOST', $cfg['host']);
+    define('DB_PORT', $cfg['port']);
+    define('DB_NAME', $cfg['db']);
+    define('DB_USER', $cfg['user']);
+    define('DB_PASS', $cfg['pass']);
     define('TABLE_PREFIX', 'conta_');
 }
 

@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Copia la carpeta api/ (endpoints PHP + schema.sql) dentro de dist/ tras el build,
-// excluyendo mock-server.mjs que solo se usa en desarrollo.
+// excluyendo los archivos solo para desarrollo local.
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'api');
 const dest = join(root, 'dist', 'api');
@@ -16,7 +16,7 @@ if (!existsSync(src)) {
 if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
 mkdirSync(dest, { recursive: true });
 
-const files = readdirSync(src).filter((f) => f !== 'mock-server.mjs' && f !== 'config.local.php' && f !== 'router.php');
+const files = readdirSync(src).filter((f) => f !== 'config.local.php' && f !== 'router.php');
 for (const f of files) {
   cpSync(join(src, f), join(dest, f), { recursive: true });
 }

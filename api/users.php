@@ -29,12 +29,13 @@ function listUsers(): void
 {
     global $pdo;
 
-    $stmt = $pdo->query("SELECT id, username, created_at FROM " . TABLE_PREFIX . "users ORDER BY username ASC");
+    $stmt = $pdo->query("SELECT id, username, totp_enabled, created_at FROM " . TABLE_PREFIX . "users ORDER BY username ASC");
     $users = [];
     foreach ($stmt->fetchAll() as $u) {
         $users[] = [
             'id' => (int) $u['id'],
             'username' => $u['username'],
+            'totp_enabled' => (int) $u['totp_enabled'] === 1,
             'created_at' => $u['created_at'],
         ];
     }
@@ -49,6 +50,7 @@ function createUser(): void
     $input = getInput();
     $username = trim($input['username'] ?? '');
     $password = $input['password'] ?? '';
+    $totpEnabled = !empty($input['totp_enabled']) ? 1 : 0;
 
     if ($username === '' || $password === '') {
         jsonError('Usuario y contraseña son obligatorios');
@@ -64,8 +66,8 @@ function createUser(): void
     }
 
     $hash = password_hash($password, PASSWORD_BCRYPT);
-    $stmt = $pdo->prepare("INSERT INTO " . TABLE_PREFIX . "users (username, password_hash) VALUES (:username, :hash)");
-    $stmt->execute([':username' => $username, ':hash' => $hash]);
+    $stmt = $pdo->prepare("INSERT INTO " . TABLE_PREFIX . "users (username, password_hash, totp_enabled) VALUES (:username, :hash, :totp_enabled)");
+    $stmt->execute([':username' => $username, ':hash' => $hash, ':totp_enabled' => $totpEnabled]);
 
     jsonResponse([
         'message' => 'Usuario creado correctamente',
@@ -82,6 +84,7 @@ function updateUser(): void
     $id = (int) ($input['id'] ?? 0);
     $username = trim($input['username'] ?? '');
     $password = $input['password'] ?? '';
+    $totpEnabled = array_key_exists('totp_enabled', $input) ? (bool) $input['totp_enabled'] : null;
 
     if ($id <= 0) {
         jsonError('ID de usuario no válido');
@@ -96,17 +99,29 @@ function updateUser(): void
         jsonError('Ya existe otro usuario con ese nombre', 409);
     }
 
+    $sets = ['username = :username'];
+    $params = [':username' => $username, ':id' => $id];
+
     if ($password !== '') {
         if (strlen($password) < 6) {
             jsonError('La contraseña debe tener al menos 6 caracteres');
         }
-        $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "users SET username = :username, password_hash = :hash WHERE id = :id");
-        $stmt->execute([':username' => $username, ':hash' => $hash, ':id' => $id]);
-    } else {
-        $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "users SET username = :username WHERE id = :id");
-        $stmt->execute([':username' => $username, ':id' => $id]);
+        $sets[] = 'password_hash = :hash';
+        $params[':hash'] = password_hash($password, PASSWORD_BCRYPT);
     }
+
+    if ($totpEnabled !== null) {
+        if ($totpEnabled) {
+            $sets[] = 'totp_enabled = 1';
+        } else {
+            $sets[] = 'totp_enabled = 0';
+            $sets[] = 'totp_secret = NULL';
+        }
+    }
+
+    $sql = "UPDATE " . TABLE_PREFIX . "users SET " . implode(', ', $sets) . " WHERE id = :id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
 
     jsonResponse(['message' => 'Usuario actualizado correctamente']);
 }

@@ -169,10 +169,19 @@ export async function updatePreferences(data: Record<string, any>): Promise<any>
   });
 }
 
-export async function login(username: string, password: string): Promise<{ token: string; user: { id: number; username: string } }> {
+export async function login(
+  username: string,
+  password: string,
+  code?: string
+): Promise<{
+  token?: string;
+  user?: { id: number; username: string; totp_enabled?: boolean };
+  totp_required?: boolean;
+  needs_setup?: boolean;
+}> {
   return request('login.php', {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, ...(code ? { code } : {}) }),
   });
 }
 
@@ -187,23 +196,42 @@ export interface User {
   id: string;
   username: string;
   created_at?: string;
+  totp_enabled?: boolean;
 }
 
 export async function fetchUsers(): Promise<User[]> {
   return request<User[]>('users.php');
 }
 
-export async function createUser(username: string, password: string): Promise<{ message: string; id: number; username: string }> {
+export async function createUser(username: string, password: string, totpEnabled?: boolean): Promise<{ message: string; id: number; username: string }> {
   return request('users.php', {
+    method: 'POST',
+    body: JSON.stringify({ username, password, totp_enabled: !!totpEnabled }),
+  });
+}
+
+export async function updateUser(id: number, username: string, password?: string, totpEnabled?: boolean): Promise<{ message: string }> {
+  return request('users.php?_method=PUT', {
+    method: 'POST',
+    body: JSON.stringify({ id, username, password, totp_enabled: totpEnabled }),
+  });
+}
+
+export async function totpSetup(username: string, password: string): Promise<{ secret_base32: string; otpauth_uri: string }> {
+  return request('totp.php?action=setup', {
     method: 'POST',
     body: JSON.stringify({ username, password }),
   });
 }
 
-export async function updateUser(id: number, username: string, password?: string): Promise<{ message: string }> {
-  return request('users.php?_method=PUT', {
+export async function totpActivate(
+  username: string,
+  password: string,
+  code: string
+): Promise<{ token: string; user: { id: number; username: string; totp_enabled?: boolean } }> {
+  return request('totp.php?action=activate', {
     method: 'POST',
-    body: JSON.stringify({ id, username, password }),
+    body: JSON.stringify({ username, password, code }),
   });
 }
 

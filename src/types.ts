@@ -41,6 +41,10 @@ export interface UserPreferences {
   dropdownBorder: string; // color del borde de los desplegables
   dropdownBorderWidth: number; // grosor del borde (px)
   dropdownRadius: number; // radio de las esquinas (px)
+  dropdownTextColor: string; // color del texto de las opciones de los desplegables
+  dropdownRowHeight: number; // altura de cada fila/opción de los desplegables (px)
+  showDescription: boolean; // mostrar la columna Descripción en el listado de Registro
+  showBalance: boolean; // mostrar la columna Saldo en el listado de Registro
 }
 
 export type BudgetType = 'gasto' | 'ingreso';

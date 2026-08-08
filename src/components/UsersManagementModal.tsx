@@ -19,6 +19,7 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
+  const [totpEnabled, setTotpEnabled] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -40,6 +41,7 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
       setUsername('');
       setPassword('');
       setConfirmPass('');
+      setTotpEnabled(false);
       setError('');
       loadUsers();
     }
@@ -52,6 +54,7 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
     setUsername('');
     setPassword('');
     setConfirmPass('');
+    setTotpEnabled(false);
     setError('');
   };
 
@@ -61,6 +64,7 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
     setUsername(user.username);
     setPassword('');
     setConfirmPass('');
+    setTotpEnabled(!!user.totp_enabled);
     setError('');
   };
 
@@ -83,10 +87,10 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
     setError('');
     try {
       if (view === 'create') {
-        await api.createUser(username.trim(), password);
+        await api.createUser(username.trim(), password, totpEnabled);
         showToast('✓ Usuario creado correctamente');
       } else if (editingUser) {
-        await api.updateUser(parseInt(editingUser.id), username.trim(), password || undefined);
+        await api.updateUser(parseInt(editingUser.id), username.trim(), password || undefined, totpEnabled);
         showToast('✓ Usuario actualizado correctamente');
       }
       setView('list');
@@ -156,6 +160,14 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
                           <div className="flex flex-col">
                             <span className="font-semibold text-base text-on-surface">
                               {user.username}
+                              {user.totp_enabled && (
+                                <span
+                                  className="ml-2 text-xs px-2 py-0.5 rounded-full bg-secondary text-on-secondary font-bold align-middle"
+                                  title="Verificación en dos pasos activada"
+                                >
+                                  2FA
+                                </span>
+                              )}
                               {user.username === currentUsername && (
                                 <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-primary text-on-primary font-bold align-middle">
                                   Tú
@@ -235,6 +247,29 @@ export const UsersManagementModal: React.FC<UsersManagementModalProps> = ({ isOp
                     />
                   </div>
                 )}
+
+                <div className="flex items-center justify-between gap-4 p-4 border-2 border-outline-variant rounded-xl">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-sm text-on-surface">Requerir verificación en dos pasos (2FA)</span>
+                    <span className="font-medium text-xs text-on-surface-variant">
+                      {totpEnabled
+                        ? view === 'edit'
+                          ? 'Activado: el usuario usará su app autenticadora en el próximo acceso'
+                          : 'Activado: el usuario configurará el QR en su primer acceso'
+                        : 'Desactivado: el usuario entra solo con contraseña'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTotpEnabled(!totpEnabled)}
+                    aria-pressed={totpEnabled}
+                    className={`w-16 h-8 rounded-full flex items-center px-1 transition-colors cursor-pointer shrink-0 ${totpEnabled ? 'bg-secondary' : 'bg-outline-variant'}`}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-full bg-on-secondary shadow transition-transform duration-200 ${totpEnabled ? 'translate-x-8' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
 
                 <div className="flex gap-4 pt-2">
                   <button

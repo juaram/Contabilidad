@@ -35,6 +35,10 @@ export default function App() {
     dropdownBorder: '#93c5fd',
     dropdownBorderWidth: 2,
     dropdownRadius: 12,
+    dropdownTextColor: '#1f2937',
+    dropdownRowHeight: 44,
+    showDescription: true,
+    showBalance: true,
   });
   const [loading, setLoading] = useState(true);
 
@@ -76,6 +80,10 @@ export default function App() {
         dropdownBorder: prefs.dropdown_border || '#93c5fd',
         dropdownBorderWidth: prefs.dropdown_border_width ?? 2,
         dropdownRadius: prefs.dropdown_radius ?? 12,
+        dropdownTextColor: prefs.dropdown_text_color || '#1f2937',
+        dropdownRowHeight: prefs.dropdown_row_height ?? 44,
+        showDescription: prefs.show_description !== 0 && prefs.show_description !== false,
+        showBalance: prefs.show_balance !== 0 && prefs.show_balance !== false,
       });
     }).catch(() => {
       showToast('Error al cargar los datos del servidor');
@@ -490,6 +498,8 @@ export default function App() {
         borderColor: preferences.dropdownBorder || '#93c5fd',
         borderWidth: preferences.dropdownBorderWidth ?? 2,
         radius: preferences.dropdownRadius ?? 12,
+        textColor: preferences.dropdownTextColor || '#1f2937',
+        rowHeight: preferences.dropdownRowHeight ?? 44,
       }}
     >
       <div className={`min-h-screen bg-background font-sans text-on-background antialiased ${preferences.highContrast ? 'high-contrast' : ''}`}>
@@ -528,6 +538,10 @@ export default function App() {
               dropdown_border: newPrefs.dropdownBorder,
               dropdown_border_width: newPrefs.dropdownBorderWidth,
               dropdown_radius: newPrefs.dropdownRadius,
+              dropdown_text_color: newPrefs.dropdownTextColor,
+              dropdown_row_height: newPrefs.dropdownRowHeight,
+              show_description: newPrefs.showDescription,
+              show_balance: newPrefs.showBalance,
             }).catch(() => showToast('Error al guardar preferencias'));
           }} onOpenAddCategoryModal={handleOpenAddCategoryModal} onOpenEditCategoryModal={handleOpenEditCategoryModal} onOpenAddSubcategoryModal={handleOpenAddSubcategoryModal} onDeleteSubcategory={handleDeleteSubcategory} onToggleSubcategory={handleToggleSubcategory} onDeleteCategory={handleDeleteCategory} onReorderCategories={handleReorderCategories} onExportData={handleExportData} onImportData={handleImportData} onBackupData={handleBackupData} onRestoreData={handleRestoreData} onManageUsers={() => setIsUsersModalOpen(true)} onOpenHelpModal={() => setIsHelpModalOpen(true)} onChangePassword={() => setIsPasswordModalOpen(true)} onToast={showToast} onMaintenanceApplied={() => setRefreshKey((k) => k + 1)} />
         )}

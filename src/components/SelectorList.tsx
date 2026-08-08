@@ -1,4 +1,4 @@
-import { useDropdownTheme, dropdownPanelStyle } from "../dropdownTheme";
+import { useDropdownTheme, dropdownPanelStyle, dropdownRowStyle } from "../dropdownTheme";
 import { useDropdownPanel } from "./useDropdownPanel";
 
 export interface SelectorListOption {
@@ -69,7 +69,8 @@ export const SelectorList: React.FC<SelectorListProps> = ({
                 onChange(opt.value);
                 close();
               }}
-              className={`w-full text-left px-4 py-2.5 cursor-pointer transition-colors ${
+              style={dropdownRowStyle(theme)}
+              className={`w-full text-left px-4 flex items-center cursor-pointer transition-colors ${
                 isSelected ? "font-bold" : ""
               } hover:bg-black/10`}
             >

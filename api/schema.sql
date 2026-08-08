@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS conta_preferences (
     dropdown_border VARCHAR(20) NOT NULL DEFAULT '#93c5fd',
     dropdown_border_width INT NOT NULL DEFAULT 2,
     dropdown_radius INT NOT NULL DEFAULT 12,
+    dropdown_text_color VARCHAR(20) NOT NULL DEFAULT '#1f2937',
+    dropdown_row_height INT NOT NULL DEFAULT 44,
+    show_description TINYINT(1) NOT NULL DEFAULT 1,
+    show_balance TINYINT(1) NOT NULL DEFAULT 1,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -55,6 +59,8 @@ CREATE TABLE IF NOT EXISTS conta_users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    totp_secret VARCHAR(64) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

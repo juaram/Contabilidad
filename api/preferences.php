@@ -48,6 +48,10 @@ function getPreferences(): void
     $prefs['dropdown_border'] = isset($prefs['dropdown_border']) ? $prefs['dropdown_border'] : '#93c5fd';
     $prefs['dropdown_border_width'] = isset($prefs['dropdown_border_width']) ? (int) $prefs['dropdown_border_width'] : 2;
     $prefs['dropdown_radius'] = isset($prefs['dropdown_radius']) ? (int) $prefs['dropdown_radius'] : 12;
+    $prefs['dropdown_text_color'] = isset($prefs['dropdown_text_color']) ? $prefs['dropdown_text_color'] : '#1f2937';
+    $prefs['dropdown_row_height'] = isset($prefs['dropdown_row_height']) ? (int) $prefs['dropdown_row_height'] : 44;
+    $prefs['show_description'] = isset($prefs['show_description']) ? (bool) $prefs['show_description'] : true;
+    $prefs['show_balance'] = isset($prefs['show_balance']) ? (bool) $prefs['show_balance'] : true;
 
     jsonResponse($prefs);
 }
@@ -64,6 +68,10 @@ function updatePreferences(): void
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_border VARCHAR(20) NOT NULL DEFAULT '#93c5fd' AFTER dropdown_bg"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_border_width INT NOT NULL DEFAULT 2 AFTER dropdown_border"); } catch (PDOException $e) { }
     try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_radius INT NOT NULL DEFAULT 12 AFTER dropdown_border_width"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN show_description TINYINT(1) NOT NULL DEFAULT 1 AFTER dropdown_radius"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN show_balance TINYINT(1) NOT NULL DEFAULT 1 AFTER show_description"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_text_color VARCHAR(20) NOT NULL DEFAULT '#1f2937' AFTER dropdown_radius"); } catch (PDOException $e) { }
+    try { $pdo->exec("ALTER TABLE " . TABLE_PREFIX . "preferences ADD COLUMN dropdown_row_height INT NOT NULL DEFAULT 44 AFTER dropdown_text_color"); } catch (PDOException $e) { }
 
     $input = getInput();
     $fields = [];
@@ -112,6 +120,22 @@ function updatePreferences(): void
     if (isset($input['dropdown_radius'])) {
         $fields[] = "dropdown_radius = :dropdown_radius";
         $params[':dropdown_radius'] = (int) $input['dropdown_radius'];
+    }
+    if (isset($input['dropdown_text_color'])) {
+        $fields[] = "dropdown_text_color = :dropdown_text_color";
+        $params[':dropdown_text_color'] = trim($input['dropdown_text_color']);
+    }
+    if (isset($input['dropdown_row_height'])) {
+        $fields[] = "dropdown_row_height = :dropdown_row_height";
+        $params[':dropdown_row_height'] = (int) $input['dropdown_row_height'];
+    }
+    if (isset($input['show_description'])) {
+        $fields[] = "show_description = :show_description";
+        $params[':show_description'] = $input['show_description'] ? 1 : 0;
+    }
+    if (isset($input['show_balance'])) {
+        $fields[] = "show_balance = :show_balance";
+        $params[':show_balance'] = $input['show_balance'] ? 1 : 0;
     }
 
     if (count($fields) === 0) {

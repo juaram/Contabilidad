@@ -29,16 +29,7 @@ npm run dev                  # Terminal 2 — Frontend
 
 Abrir `http://localhost:5173/conta/`.
 
-### Opción 2: Con servidor mock (solo frontend, no requiere PHP)
-
-```bash
-node api/mock-server.mjs    # Terminal 1 — API mock (puerto 8080)
-npm run dev                  # Terminal 2 — Frontend
-```
-
-Abrir `http://localhost:5173/conta/`.
-
-### Opción 3: Contra servidor remoto
+### Opción 2: Contra servidor remoto
 
 Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu/conta`, luego `npm run dev`.
 
@@ -54,8 +45,8 @@ Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu/conta`, luego `npm r
 
 > **Build:** `npm run build` ejecuta `vite build` y después `node scripts/copy-api.mjs`,
 > que copia todos los archivos de `api/` (endpoints PHP + `schema.sql`) a `dist/api/`.
-> Se excluyen por ser solo para desarrollo: `mock-server.mjs`, `router.php` y
-> `config.local.php` (así `dist/api/config.php` usa siempre las credenciales de Hostalia).
+> Se excluyen por ser solo para desarrollo: `router.php` y
+> `config.local.php` (así `dist/api/config.php` usa las credenciales de producción según el dominio).
 > El resultado de `dist/` es autocontenido (frontend + backend) y listo para subir a producción.
 
 ## Despliegue en Hostalia
@@ -64,7 +55,21 @@ Crear `.env.local` con `VITE_API_TARGET=https://jramirez.eu/conta`, luego `npm r
 npm run build
 ```
 
-Subir `dist/` a `public_html/conta/` (ya incluye `dist/api/` con los endpoints PHP y el `schema.sql`). Ejecutar `api/schema.sql` en la base de datos.
+Subir `dist/` a `public_html/conta/` (ya incluye `dist/api/` con los endpoints PHP y el `schema.sql`). Ejecutar `api/schema.sql` en la base de datos de cada instalación.
+
+### Bases de datos por dominio
+
+Cada dominio despliega su propia instalación con su propia base de datos (los datos no se mezclan).
+`api/config.php` elige la base de datos según el dominio (`HTTP_HOST`) mediante un mapa:
+
+| Dominio | Estado |
+|---|---|
+| `jramirez.eu` | Configurado (Hostalia `POAPMYSQL143`, BD `8600814_compartida`) |
+| `twinbrosburger.com` | Configurado (Hostalia `PMYSQL170`, BD `9903378_conta`) |
+
+El mismo `dist/` sirve para ambos dominios: sube el build a `public_html/conta/` de cada dominio y `config.php` elige automáticamente la base de datos correspondiente según el dominio en el que se recibe la petición. Para añadir un dominio nuevo, basta con añadir un bloque en el mapa de `api/config.php`.
+
+Local (TrueNAS) sigue funcionando igual: `api/config.local.php` (no se sube al build) tiene prioridad sobre el mapa de dominios.
 
 **Nota:** Hostalia no soporta los verbos HTTP `PUT` ni `DELETE`. Los endpoints usan `POST` con `_method=DELETE` donde es necesario.
 
@@ -111,5 +116,4 @@ api/
 ├── preferences.php
 ├── export.php
 ├── import.php
-└── mock-server.mjs            # Mock para desarrollo local (sin PHP)
 ```

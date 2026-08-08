@@ -12,6 +12,19 @@ const formatAmount = (value: number): string => {
   return `${value < 0 ? '-' : ''}${grouped},${dec}`;
 };
 
+type ColKey = 'date' | 'category' | 'subcategory' | 'description' | 'debe' | 'haber' | 'saldo' | 'acciones';
+
+const COLUMN_WEIGHTS: Record<ColKey, number> = {
+  date: 11,
+  category: 12,
+  subcategory: 14,
+  description: 22,
+  debe: 10,
+  haber: 10,
+  saldo: 13,
+  acciones: 8,
+};
+
 interface RegistroViewProps {
   movements: Movement[];
   categories: Category[];
@@ -200,6 +213,209 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
     };
   }, [filteredMovements, sortOrder]);
 
+  // Visible columns and proportional widths based on the user's preferences
+  const columns = useMemo(() => {
+    const keys: ColKey[] = ['date', 'category', 'subcategory'];
+    if (preferences.showDescription) keys.push('description');
+    keys.push('debe', 'haber');
+    if (preferences.showBalance) keys.push('saldo');
+    keys.push('acciones');
+    const total = keys.reduce((sum, k) => sum + COLUMN_WEIGHTS[k], 0);
+    return keys.map((key) => ({ key, width: `${((COLUMN_WEIGHTS[key] / total) * 100).toFixed(2)}%` }));
+  }, [preferences.showDescription, preferences.showBalance]);
+
+  const colsBeforeDebe = columns.filter((c) => ['date', 'category', 'subcategory', 'description'].includes(c.key)).length;
+  const colsAfterHaber = columns.filter((c) => ['saldo', 'acciones'].includes(c.key)).length;
+
+  const renderHeaderCell = (key: ColKey): React.ReactNode => {
+    const base = 'px-3 py-3 font-semibold text-sm';
+    switch (key) {
+      case 'date':
+        return (
+          <th key={key} className={base}>
+            <button
+              onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+              className="w-full flex items-center justify-between gap-1 cursor-pointer group"
+              title={sortOrder === 'desc' ? 'Ordenar fecha: descendente (más reciente)' : 'Ordenar fecha: ascendente (más antigua)'}
+            >
+              <span>Fecha</span>
+              <span className="material-symbols-outlined text-on-tertiary-container opacity-100 transition-opacity text-[18px]">
+                {sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+              </span>
+            </button>
+          </th>
+        );
+      case 'category':
+        return (
+          <th key={key} className={base}>
+            <span>Categoría</span>
+          </th>
+        );
+      case 'subcategory':
+        return (
+          <th key={key} className={base}>
+            <span>Subcategoría</span>
+          </th>
+        );
+      case 'description':
+        return (
+          <th key={key} className={base}>
+            <span>Descripción</span>
+          </th>
+        );
+      case 'debe':
+        return (
+          <th key={key} className={`${base} text-right`}>
+            <span>Debe</span>
+          </th>
+        );
+      case 'haber':
+        return (
+          <th key={key} className={`${base} text-right`}>
+            <span>Haber</span>
+          </th>
+        );
+      case 'saldo':
+        return (
+          <th key={key} className={`${base} text-right bg-primary`}>
+            <span>Saldo</span>
+          </th>
+        );
+      case 'acciones':
+        return (
+          <th key={key} className="px-3 py-3 text-right">
+            <span className="text-on-outline font-semibold text-sm">Acciones</span>
+          </th>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderBodyCell = (key: ColKey, mov: Movement & { balanceAfter?: number }, isSelected: boolean): React.ReactNode => {
+    const isExpense = mov.type === 'gasto';
+    const movCat = categoryById.get(mov.category_id);
+    switch (key) {
+      case 'date':
+        return (
+          <td key={key} className="px-3 py-2 font-normal text-sm whitespace-nowrap">
+            {mov.date.includes('-') ? mov.date.split('-').reverse().join('/') : mov.date}
+          </td>
+        );
+      case 'category':
+        return (
+          <td key={key} className="px-3 py-2 font-semibold text-sm">
+            {
+              <span
+                className={`px-2 py-1 rounded ${
+                  isSelected
+                    ? 'bg-white/20 text-white'
+                    : movCat
+                      ? ''
+                      : 'bg-surface-container-high text-on-surface-variant'
+                }`}
+                style={movCat && !isSelected ? categoryColorStyle(movCat.colorBgClass, movCat.colorTextClass) : undefined}
+              >
+                {mov.category}
+              </span>
+            }
+          </td>
+        );
+      case 'subcategory':
+        return (
+          <td key={key} className="px-3 py-2 font-medium text-sm">
+            {mov.subcategory}
+          </td>
+        );
+      case 'description':
+        return (
+          <td key={key} className="px-3 py-2 font-medium text-sm">
+            <span
+              onMouseEnter={(e) => {
+                const el = e.currentTarget;
+                if (el.scrollWidth > el.clientWidth) {
+                  const rect = el.getBoundingClientRect();
+                  setTooltip({
+                    text: mov.description,
+                    x: rect.left,
+                    y: rect.bottom + 8,
+                  });
+                }
+              }}
+              onMouseLeave={() => setTooltip(null)}
+              className="block w-full truncate"
+            >
+              {mov.description}
+            </span>
+          </td>
+        );
+      case 'debe':
+        return (
+          <td key={key} className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
+            {isExpense ? (
+              <span className={isSelected ? 'text-tertiary-fixed-dim' : 'text-error'}>
+                {formatAmount(mov.amount)} {currencySymbol}
+              </span>
+            ) : (
+              <span className="opacity-40">-</span>
+            )}
+          </td>
+        );
+      case 'haber':
+        return (
+          <td key={key} className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
+            {!isExpense ? (
+              <span className={isSelected ? 'text-secondary-container' : 'text-secondary'}>
+                {formatAmount(mov.amount)} {currencySymbol}
+              </span>
+            ) : (
+              <span className="opacity-40">-</span>
+            )}
+          </td>
+        );
+      case 'saldo':
+        return (
+          <td
+            key={key}
+            className={`px-3 py-2 font-bold text-base text-right whitespace-nowrap ${
+              isSelected ? 'bg-primary-container/40 text-white' : 'bg-surface-container-low text-primary'
+            }`}
+          >
+            {mov.balanceAfter !== undefined ? `${formatAmount(mov.balanceAfter)} ${currencySymbol}` : '-'}
+          </td>
+        );
+      case 'acciones':
+        return (
+          <td key={key} className="px-3 py-2 text-right whitespace-nowrap">
+            <div className="flex items-center justify-end gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditMovement(mov);
+                }}
+                title="Editar movimiento"
+                className={`p-1 rounded hover:bg-secondary/20 ${isSelected ? 'text-white' : 'text-outline hover:text-secondary'}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">edit</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget(mov);
+                }}
+                title="Eliminar movimiento"
+                className={`p-1 rounded hover:bg-error/20 ${isSelected ? 'text-white' : 'text-outline hover:text-error'}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">delete</span>
+              </button>
+            </div>
+          </td>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Interactive Filters Header Section */}
@@ -296,62 +512,13 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           <div className="bg-white border-2 border-b-0 border-primary rounded-t-xl overflow-hidden">
             <table className={`w-full border-collapse text-left table-fixed ${listFontClass}`}>
               <colgroup>
-                <col style={{ width: '11%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '22%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '13%' }} />
-                <col style={{ width: '8%' }} />
+                {columns.map((c) => (
+                  <col key={c.key} style={{ width: c.width }} />
+                ))}
               </colgroup>
               <thead>
                 <tr className="bg-primary text-white border-b-2 border-primary">
-                  <th className="px-3 py-3 font-semibold text-sm">
-                    <button
-                      onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
-                      className="w-full flex items-center justify-between gap-1 cursor-pointer group"
-                      title={sortOrder === 'desc' ? 'Ordenar fecha: descendente (más reciente)' : 'Ordenar fecha: ascendente (más antigua)'}
-                    >
-                      <span>Fecha</span>
-                      <span className="material-symbols-outlined text-on-tertiary-container opacity-100 group-hover:opacity-100 transition-opacity text-[18px]">
-                        {sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-                      </span>
-                    </button>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm">
-                    <div className="flex items-center justify-between gap-1">
-                      <span>Categoría</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm">
-                    <div className="flex items-center justify-between gap-1">
-                      <span>Subcategoría</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm">
-                    <div className="flex items-center justify-between gap-1">
-                      <span>Descripción</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <span>Debe</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <span>Haber</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-semibold text-sm text-right bg-primary">
-                    <div className="flex items-center justify-end gap-1">
-                      <span>Saldo</span>
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <span className="text-on-outline font-semibold text-sm">Acciones</span>
-                  </th>
+                  {columns.map((c) => renderHeaderCell(c.key))}
                 </tr>
               </thead>
             </table>
@@ -365,26 +532,20 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
           <div className="bg-white border-2 border-t-0 border-outline-variant rounded-b-xl overflow-x-auto shadow-sm">
             <table className={`w-full border-collapse text-left table-fixed ${listFontClass}`}>
               <colgroup>
-                <col style={{ width: '11%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '22%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '13%' }} />
-                <col style={{ width: '8%' }} />
+                {columns.map((c) => (
+                  <col key={c.key} style={{ width: c.width }} />
+                ))}
               </colgroup>
               <tbody className="divide-y-2 divide-outline-variant">
                 {tableRows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-on-surface-variant text-lg">
+                    <td colSpan={columns.length} className="px-6 py-12 text-center text-on-surface-variant text-lg">
                       No se encontraron registros para los filtros seleccionados.
                     </td>
                   </tr>
                 ) : (
                   tableRows.map((mov) => {
                     const isSelected = highlightedRowId === mov.id;
-                    const isExpense = mov.type === 'gasto';
 
                     return (
                       <tr
@@ -396,108 +557,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                             : 'hover:bg-surface-container-low text-on-surface'
                         }`}
                       >
-                        <td className="px-3 py-2 font-normal text-sm whitespace-nowrap">
-                          {mov.date.includes('-')
-                            ? mov.date.split('-').reverse().join('/')
-                            : mov.date}
-                        </td>
-
-                        <td className="px-3 py-2 font-semibold text-sm">
-                          {(() => {
-                            const movCat = categoryById.get(mov.category_id);
-                            return (
-                              <span
-                                className={`px-2 py-1 rounded ${
-                                  isSelected
-                                    ? 'bg-white/20 text-white'
-                                    : movCat
-                                      ? ''
-                                      : 'bg-surface-container-high text-on-surface-variant'
-                                }`}
-                                style={movCat && !isSelected ? categoryColorStyle(movCat.colorBgClass, movCat.colorTextClass) : undefined}
-                              >
-                                {mov.category}
-                              </span>
-                            );
-                          })()}
-                        </td>
-
-                        <td className="px-3 py-2 font-medium text-sm">
-                          {mov.subcategory}
-                        </td>
-
-                        <td className="px-3 py-2 font-medium text-sm">
-                          <span
-                            onMouseEnter={(e) => {
-                              const el = e.currentTarget;
-                              if (el.scrollWidth > el.clientWidth) {
-                                const rect = el.getBoundingClientRect();
-                                setTooltip({
-                                  text: mov.description,
-                                  x: rect.left,
-                                  y: rect.bottom + 8,
-                                });
-                              }
-                            }}
-                            onMouseLeave={() => setTooltip(null)}
-                            className="block w-full truncate"
-                          >
-                            {mov.description}
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
-                          {isExpense ? (
-                            <span className={isSelected ? 'text-tertiary-fixed-dim' : 'text-error'}>
-                              {formatAmount(mov.amount)} {currencySymbol}
-                            </span>
-                          ) : (
-                            <span className="opacity-40">-</span>
-                          )}
-                        </td>
-
-                        <td className="px-3 py-2 font-bold text-sm text-right whitespace-nowrap">
-                          {!isExpense ? (
-                            <span className={isSelected ? 'text-secondary-container' : 'text-secondary'}>
-                              {formatAmount(mov.amount)} {currencySymbol}
-                            </span>
-                          ) : (
-                            <span className="opacity-40">-</span>
-                          )}
-                        </td>
-
-                        <td className={`px-3 py-2 font-bold text-base text-right whitespace-nowrap ${
-                          isSelected ? 'bg-primary-container/40 text-white' : 'bg-surface-container-low text-primary'
-                        }`}>
-                          {mov.balanceAfter !== undefined
-                            ? `${formatAmount(mov.balanceAfter)} ${currencySymbol}`
-                            : '-'}
-                        </td>
-
-                        <td className="px-3 py-2 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditMovement(mov);
-                              }}
-                              title="Editar movimiento"
-                              className={`p-1 rounded hover:bg-secondary/20 ${isSelected ? 'text-white' : 'text-outline hover:text-secondary'}`}
-                            >
-                              <span className="material-symbols-outlined text-[20px]">edit</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteTarget(mov);
-                              }}
-                              title="Eliminar movimiento"
-                              className={`p-1 rounded hover:bg-error/20 ${isSelected ? 'text-white' : 'text-outline hover:text-error'}`}
-                            >
-                              <span className="material-symbols-outlined text-[20px]">delete</span>
-                            </button>
-                          </div>
-                        </td>
+                        {columns.map((c) => renderBodyCell(c.key, mov, isSelected))}
                       </tr>
                     );
                   })
@@ -506,7 +566,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
 
               <tfoot>
                 <tr className="bg-primary text-on-primary">
-                  <td colSpan={4} className="px-6 py-5 font-bold text-base md:text-lg text-right uppercase">
+                  <td colSpan={colsBeforeDebe} className="px-6 py-5 font-bold text-base md:text-lg text-right uppercase">
                     TOTAL ACUMULADO PERIODO:
                   </td>
                   <td className="px-6 py-5 font-extrabold text-sm md:text-base text-right text-tertiary-fixed whitespace-nowrap">
@@ -515,7 +575,7 @@ export const RegistroView: React.FC<RegistroViewProps> = ({
                   <td className="px-6 py-5 font-extrabold text-sm md:text-base text-right text-secondary-fixed whitespace-nowrap">
                     {formatAmount(totalIncome)} {currencySymbol}
                   </td>
-                  <td className="px-6 py-5 font-black text-2xl md:text-3xl text-right bg-primary-container text-white whitespace-nowrap" colSpan={2}>
+                  <td colSpan={colsAfterHaber} className="px-6 py-5 font-black text-2xl md:text-3xl text-right bg-primary-container text-white whitespace-nowrap">
                     {formatAmount(finalBalance)} {currencySymbol}
                   </td>
                 </tr>

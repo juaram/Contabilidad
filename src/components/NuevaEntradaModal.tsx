@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Category, Movement, MovementType } from "../types";
 import { SelectorFecha } from "./SelectorFecha";
 import { SelectorList } from "./SelectorList";
-import { useDropdownTheme, dropdownPanelStyle } from "../dropdownTheme";
+import { useDropdownTheme, dropdownPanelStyle, dropdownRowStyle } from "../dropdownTheme";
 
 const MONTH_NAMES_FULL = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -391,7 +391,8 @@ export const NuevaEntradaModal: React.FC<NuevaEntradaModalProps> = ({
                       e.preventDefault();
                       handlePickDescription(d);
                     }}
-                    className="w-full text-left px-4 py-3 hover:bg-surface-container-high transition-colors cursor-pointer text-sm md:text-base"
+                    style={dropdownRowStyle(theme)}
+                    className="w-full text-left px-4 flex items-center hover:bg-surface-container-high transition-colors cursor-pointer text-sm md:text-base"
                   >
                     {d}
                   </button>
